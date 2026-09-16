@@ -1,24 +1,33 @@
 <!DOCTYPE html>
-<html lang="de" class="dark">
+<html lang="de" class="dark h-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AudioForge iOS Studio Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AudioForge & iMusic Studio Suite</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- MP4Box.js for native iOS MOV/MP4 audio demuxing -->
   <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.2/dist/mp4box.all.min.js"></script>
   <!-- lamejs for high-efficiency MP3 encoding -->
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
   <!-- JSZip for batch download ZIP generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Google Font Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
           colors: {
             ios: {
               bg: '#000000',
@@ -30,6 +39,7 @@
               green: '#30d158',
               red: '#ff453a',
               orange: '#ff9f0a',
+              pink: '#FA233B',
               textMuted: '#8e8e93'
             }
           }
@@ -41,7 +51,7 @@
     body {
       background-color: #000000;
       color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, Helvetica, Arial, sans-serif;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
@@ -69,339 +79,589 @@
       background: #3a3a3c;
       border-radius: 4px;
     }
-    button, label {
-      touch-action: manipulation;
+    .glass-panel {
+      background: rgba(28, 28, 30, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .player-modal-slide {
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .animate-float {
+      animation: float 4s ease-in-out infinite;
     }
   </style>
 </head>
-<body class="min-h-screen pb-16 pt-4 px-3 sm:px-6 flex flex-col items-center justify-start max-w-xl mx-auto">
+<body class="min-h-screen flex flex-col items-center justify-start max-w-xl mx-auto px-3 sm:px-6 pb-24 pt-3">
 
-  <header class="w-full flex items-center justify-between mb-5 pt-2">
-    <div class="flex items-center gap-3">
-      <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-2"/>
-        </svg>
-      </div>
-      <div>
-        <h1 class="text-xl font-bold tracking-tight leading-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">AudioForge iOS Studio</h1>
-        <p class="text-xs text-ios-textMuted font-medium">Video-zu-Audio Converter & Studio Editor</p>
-      </div>
-    </div>
-    <span class="text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-      iOS Safe Engine
-    </span>
+  <!-- Master Navigation Header (App Switcher) - Hidden on Welcome Screen -->
+  <header id="master-header" class="w-full bg-ios-card p-1.5 rounded-2xl mb-4 hidden border border-white/10 shadow-xl z-30">
+    <button onclick="switchApp('welcome')" id="nav-btn-welcome" type="button" class="py-2.5 px-3 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center">
+      <i class="fa-solid fa-house text-sm"></i>
+    </button>
+    <button onclick="switchApp('converter')" id="nav-btn-converter" type="button" class="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-ios-blue shadow transition-all cursor-pointer flex items-center justify-center gap-1.5">
+      <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+      AudioForge
+    </button>
+    <button onclick="switchApp('imusic')" id="nav-btn-imusic" type="button" class="flex-1 py-2.5 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5">
+      <i class="fa-solid fa-music text-sm"></i>
+      iMusic Library
+    </button>
   </header>
 
-  <div class="w-full bg-ios-card p-1 rounded-2xl mb-5 flex border border-white/5 shadow-md">
-    <button id="tab-single" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-ios-blue shadow transition-all cursor-pointer flex items-center justify-center gap-1.5">
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-      Einzelnes Video
-    </button>
-    <button id="tab-batch" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5">
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-      Stapelverarbeitung (Batch)
-    </button>
-  </div>
-
-  <div id="error-banner" class="hidden w-full mb-4 p-3.5 bg-red-500/15 border border-red-500/30 rounded-2xl flex items-start gap-3 animate-fadeIn">
-    <div class="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">!</div>
-    <div class="flex-1">
-      <p class="text-xs font-semibold text-red-300">Hinweis / Fehler</p>
-      <p id="error-message" class="text-xs text-red-200/90 leading-relaxed mt-0.5"></p>
+  <!-- ==================== WELCOME & HOME SCREEN ==================== -->
+  <div id="app-welcome" class="w-full flex flex-col items-center pt-6 pb-12">
+    <!-- Hero Branding -->
+    <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-pink-600 flex items-center justify-center shadow-2xl shadow-indigo-500/30 mb-6 animate-float border border-white/20">
+      <i class="fa-solid fa-headphones-simple text-4xl text-white"></i>
     </div>
-    <button type="button" onclick="hideError()" class="text-xs text-red-300 font-bold px-1.5 py-0.5 rounded hover:bg-red-500/20">✕</button>
-  </div>
+    
+    <span class="text-xs font-bold bg-ios-blue/15 text-ios-blue border border-ios-blue/30 px-3 py-1 rounded-full mb-3 flex items-center gap-1.5">
+      <i class="fa-solid fa-bolt text-[10px]"></i> Studio Suite v2.0
+    </span>
 
-  <!-- Hidden native file inputs -->
-  <input type="file" id="file-input-single" accept="video/*" class="sr-only">
-  <input type="file" id="file-input-batch" accept="video/*" multiple class="sr-only">
+    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-center bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent mb-2">
+      AudioForge & iMusic Studio
+    </h1>
+    <p class="text-xs sm:text-sm text-ios-textMuted text-center max-w-sm mb-8 leading-relaxed">
+      Die ultimative iOS Web-App zum Extrahieren von Audios aus Videos, professionellen Bearbeiten und Musikhören in deiner Bibliothek.
+    </p>
 
-  <label id="upload-box" for="file-input-single" class="w-full block bg-ios-card border-2 border-dashed border-gray-700 hover:border-ios-blue active:border-ios-blue rounded-3xl p-6 text-center cursor-pointer transition-all mb-5 relative group overflow-hidden shadow-xl">
-    <div class="flex flex-col items-center justify-center py-5 pointer-events-none">
-      <div class="w-16 h-16 rounded-2xl bg-ios-blue/10 flex items-center justify-center text-ios-blue mb-3 group-hover:scale-110 transition-transform shadow-inner">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-        </svg>
+    <!-- Quick Entry Cards -->
+    <div class="w-full space-y-3.5 mb-8">
+      <!-- Card 1: AudioForge Converter -->
+      <div onclick="switchApp('converter')" class="w-full bg-ios-card hover:bg-ios-cardHover active:scale-[0.98] transition-all rounded-3xl p-5 border border-white/10 shadow-xl cursor-pointer flex items-center justify-between group">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-ios-blue/20 text-ios-blue flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white mb-0.5">AudioForge Studio</h3>
+            <p class="text-xs text-ios-textMuted">Video-zu-Audio, MP3/WAV/M4R, Trim & Effekte</p>
+          </div>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:translate-x-1 transition">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </div>
       </div>
-      <p id="upload-box-title" class="font-semibold text-sm text-gray-100 mb-1">Hier tippen um Video auszuwählen</p>
-      <p id="upload-box-subtitle" class="text-xs text-ios-textMuted">Unterstützt `.mov`, `.mp4` & `.m4v` aus der iOS Mediathek</p>
-    </div>
-  </label>
 
-  <div id="preview-box" class="hidden w-full bg-ios-card rounded-3xl p-4 mb-5 shadow-2xl border border-white/5">
-    <div class="flex justify-between items-center mb-3">
-      <div class="flex items-center gap-2 overflow-hidden mr-2">
-        <span class="w-2 h-2 rounded-full bg-ios-blue"></span>
-        <span id="file-name" class="text-xs font-semibold text-gray-200 truncate max-w-[210px]">video.mov</span>
+      <!-- Card 2: iMusic Library -->
+      <div onclick="switchApp('imusic')" class="w-full bg-ios-card hover:bg-ios-cardHover active:scale-[0.98] transition-all rounded-3xl p-5 border border-white/10 shadow-xl cursor-pointer flex items-center justify-between group">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-500 flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
+            <i class="fa-solid fa-music"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white mb-0.5">iMusic Bibliothek</h3>
+            <p class="text-xs text-ios-textMuted">Musik-Player, Favoriten & Import-Verwaltung</p>
+          </div>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:translate-x-1 transition">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </div>
       </div>
-      <label for="file-input-single" class="text-xs text-ios-blue font-semibold hover:underline cursor-pointer py-1 px-2.5 bg-ios-blue/10 rounded-xl transition-all">Anderes Video</label>
     </div>
-    <div class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-inner border border-white/10">
-      <video id="video-preview" playsinline controls class="w-full h-full object-contain"></video>
+
+    <!-- Quick Highlights / Features Footer -->
+    <div class="w-full grid grid-cols-3 gap-2.5">
+      <div class="bg-black/40 p-3 rounded-2xl border border-white/5 text-center">
+        <i class="fa-solid fa-shield-halved text-ios-blue text-sm mb-1.5"></i>
+        <h4 class="text-[11px] font-bold text-white">100% Privat</h4>
+        <p class="text-[10px] text-ios-textMuted">Client-Side Engine</p>
+      </div>
+      <div class="bg-black/40 p-3 rounded-2xl border border-white/5 text-center">
+        <i class="fa-solid fa-mobile-screen text-ios-purple text-sm mb-1.5"></i>
+        <h4 class="text-[11px] font-bold text-white">iOS Ready</h4>
+        <p class="text-[10px] text-ios-textMuted">MOV & Ringtone</p>
+      </div>
+      <div class="bg-black/40 p-3 rounded-2xl border border-white/5 text-center">
+        <i class="fa-solid fa-bolt text-amber-400 text-sm mb-1.5"></i>
+        <h4 class="text-[11px] font-bold text-white">High Speed</h4>
+        <p class="text-[10px] text-ios-textMuted">WebAssembly</p>
+      </div>
     </div>
   </div>
 
-  <div id="batch-box" class="hidden w-full bg-ios-card rounded-3xl p-4 mb-5 shadow-2xl border border-white/5">
-    <div class="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
-      <h3 class="text-xs font-bold text-ios-textMuted uppercase tracking-wider">Ausgewählte Videos (<span id="batch-count">0</span>)</h3>
-      <label for="file-input-batch" class="text-xs text-ios-blue font-semibold hover:underline cursor-pointer py-1 px-2.5 bg-ios-blue/10 rounded-xl">Weitere hinzufügen</label>
-    </div>
-    <div id="batch-list" class="space-y-2.5 max-h-60 overflow-y-auto pr-1 custom-scrollbar mb-2">
-      <!-- Dynamic batch item list -->
-    </div>
-  </div>
 
-  <div id="settings-card" class="w-full bg-ios-card rounded-3xl p-5 mb-5 shadow-2xl border border-white/5 space-y-5">
-    <div class="flex items-center justify-between pb-3 border-b border-white/5">
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4 text-ios-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-        <h2 class="text-xs font-bold tracking-wider text-ios-textMuted uppercase">Studio Bearbeitung & Formate</h2>
+  <!-- ==================== APP 1: AUDIOFORGE CONVERTER & STUDIO ==================== -->
+  <div id="app-converter" class="w-full flex flex-col hidden">
+    <div class="flex items-center justify-between mb-4 pt-1">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-2"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight leading-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">AudioForge iOS Studio</h1>
+          <p class="text-[11px] text-ios-textMuted font-medium">Video-zu-Audio Converter & Studio Editor</p>
+        </div>
       </div>
-      <!-- Ringtone Quick Mode Button -->
-      <button id="ringtone-preset-btn" type="button" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-ios-purple/15 text-ios-purple border border-ios-purple/30 hover:bg-ios-purple/25 active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-        iPhone Klingelton 30s
+      <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-full flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        iOS Ready
+      </span>
+    </div>
+
+    <!-- Mode Selector: Single vs Batch -->
+    <div class="w-full bg-ios-card p-1 rounded-2xl mb-4 flex border border-white/5 shadow-md">
+      <button id="tab-single" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-ios-blue shadow transition-all cursor-pointer flex items-center justify-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        Einzelnes Video
+      </button>
+      <button id="tab-batch" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        Stapelverarbeitung (Batch)
       </button>
     </div>
 
-    <!-- 0. Target Filename Setting -->
-    <div class="bg-black/40 p-3.5 rounded-2xl border border-white/5 space-y-1.5">
-      <label for="custom-filename-input" class="block text-xs font-semibold text-gray-200 flex items-center gap-1.5">
-        ✏️ Wunsch-Dateiname (ohne Endung)
-      </label>
-      <input type="text" id="custom-filename-input" placeholder="z. B. Mein_Lieblingslied" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-ios-blue transition-all">
-      <p class="text-[10px] text-ios-textMuted">Wird leer gelassen, nutzt die App den Originalnamen des Videos.</p>
+    <div id="error-banner" class="hidden w-full mb-4 p-3.5 bg-red-500/15 border border-red-500/30 rounded-2xl flex items-start gap-3">
+      <div class="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">!</div>
+      <div class="flex-1">
+        <p class="text-xs font-semibold text-red-300">Hinweis / Fehler</p>
+        <p id="error-message" class="text-xs text-red-200/90 leading-relaxed mt-0.5"></p>
+      </div>
+      <button type="button" onclick="hideError()" class="text-xs text-red-300 font-bold px-1.5 py-0.5 rounded hover:bg-red-500/20">✕</button>
     </div>
 
-    <!-- 1. Audio Trimming Section -->
-    <div class="bg-black/40 p-3.5 rounded-2xl border border-white/5 space-y-3">
-      <div class="flex justify-between items-center text-xs font-semibold">
-        <span class="text-gray-200 flex items-center gap-1.5">
-          ✂️ Audio zuschneiden
-        </span>
-        <span id="trim-range-val" class="text-ios-blue font-mono font-bold">00:00 - Max</span>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-[11px] text-ios-textMuted mb-1">Startzeit (Sekunden)</label>
-          <input type="number" id="trim-start" min="0" value="0" step="1" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2 border border-white/10 focus:outline-none focus:border-ios-blue">
-        </div>
-        <div>
-          <label class="block text-[11px] text-ios-textMuted mb-1">Endzeit (0 = Bis Ende)</label>
-          <input type="number" id="trim-end" min="0" value="0" step="1" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2 border border-white/10 focus:outline-none focus:border-ios-blue">
-        </div>
-      </div>
-    </div>
+    <!-- Hidden native file inputs -->
+    <input type="file" id="file-input-single" accept="video/*" class="sr-only">
+    <input type="file" id="file-input-batch" accept="video/*" multiple class="sr-only">
 
-    <!-- 2. Fade & Speed Effects -->
-    <div class="grid grid-cols-2 gap-3">
-      <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
-        <div class="flex justify-between text-[11px] font-semibold mb-1">
-          <span class="text-gray-300">Fade In / Out</span>
-          <span id="fade-val" class="text-ios-blue font-bold">0s / 0s</span>
+    <label id="upload-box" for="file-input-single" class="w-full block bg-ios-card border-2 border-dashed border-gray-700 hover:border-ios-blue active:border-ios-blue rounded-3xl p-6 text-center cursor-pointer transition-all mb-4 relative group overflow-hidden shadow-xl">
+      <div class="flex flex-col items-center justify-center py-4 pointer-events-none">
+        <div class="w-14 h-14 rounded-2xl bg-ios-blue/10 flex items-center justify-center text-ios-blue mb-3 group-hover:scale-110 transition-transform shadow-inner">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
         </div>
-        <div class="space-y-2 mt-2">
-          <input type="range" id="fade-in-slider" min="0" max="5" value="0" step="0.5" class="w-full accent-ios-blue">
-          <input type="range" id="fade-out-slider" min="0" max="5" value="0" step="0.5" class="w-full accent-ios-blue">
-        </div>
+        <p id="upload-box-title" class="font-semibold text-sm text-gray-100 mb-1">Hier tippen um Video auszuwählen</p>
+        <p id="upload-box-subtitle" class="text-xs text-ios-textMuted">Unterstützt `.mov`, `.mp4` & `.m4v` aus der iOS Mediathek</p>
       </div>
+    </label>
 
-      <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
-        <div class="flex justify-between text-[11px] font-semibold mb-1">
-          <span class="text-gray-300">Geschwindigkeit</span>
-          <span id="speed-val" class="text-ios-blue font-bold">1.0x</span>
+    <div id="preview-box" class="hidden w-full bg-ios-card rounded-3xl p-4 mb-4 shadow-2xl border border-white/5">
+      <div class="flex justify-between items-center mb-3">
+        <div class="flex items-center gap-2 overflow-hidden mr-2">
+          <span class="w-2 h-2 rounded-full bg-ios-blue"></span>
+          <span id="file-name" class="text-xs font-semibold text-gray-200 truncate max-w-[210px]">video.mov</span>
         </div>
-        <input type="range" id="speed-slider" min="0.5" max="2.0" value="1.0" step="0.25" class="w-full accent-ios-blue mt-3">
-        <div class="flex justify-between text-[9px] text-ios-textMuted mt-1">
-          <span>0.5x</span>
-          <span>1.0x</span>
-          <span>2.0x</span>
-        </div>
+        <label for="file-input-single" class="text-xs text-ios-blue font-semibold hover:underline cursor-pointer py-1 px-2.5 bg-ios-blue/10 rounded-xl transition-all">Anderes Video</label>
+      </div>
+      <div class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-inner border border-white/10">
+        <video id="video-preview" playsinline controls class="w-full h-full object-contain"></video>
       </div>
     </div>
 
-    <!-- 3. Audio Tuning (Volume & Voice Booster) -->
-    <div class="bg-black/40 p-3.5 rounded-2xl border border-white/5 space-y-3">
-      <div class="flex justify-between items-center">
-        <div>
-          <span class="text-xs font-semibold text-gray-200 block">Lautstärke-Verstärkung</span>
-          <span class="text-[10px] text-ios-textMuted">Audio um bis zu 300% verstärken</span>
-        </div>
-        <span id="volume-val" class="text-xs text-ios-blue font-bold font-mono">100%</span>
+    <div id="batch-box" class="hidden w-full bg-ios-card rounded-3xl p-4 mb-4 shadow-2xl border border-white/5">
+      <div class="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
+        <h3 class="text-xs font-bold text-ios-textMuted uppercase tracking-wider">Ausgewählte Videos (<span id="batch-count">0</span>)</h3>
+        <label for="file-input-batch" class="text-xs text-ios-blue font-semibold hover:underline cursor-pointer py-1 px-2.5 bg-ios-blue/10 rounded-xl">Weitere hinzufügen</label>
       </div>
-      <input type="range" id="volume-slider" min="50" max="300" value="100" class="w-full accent-ios-blue">
+      <div id="batch-list" class="space-y-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar mb-2"></div>
+    </div>
 
-      <div class="pt-2 border-t border-white/5 flex items-center justify-between">
-        <div>
-          <span class="text-xs font-semibold text-gray-200 block">🎙️ Sprach- & Stimm-Booster</span>
-          <span class="text-[10px] text-ios-textMuted">Optimiert Gesang / Sprache & senkt Rauschen</span>
+    <div id="settings-card" class="w-full bg-ios-card rounded-3xl p-4 mb-4 shadow-2xl border border-white/5 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-white/5">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-ios-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+          <h2 class="text-xs font-bold tracking-wider text-ios-textMuted uppercase">Studio Bearbeitung & Formate</h2>
         </div>
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" id="voice-boost-toggle" class="sr-only peer">
-          <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-ios-green"></div>
+        <button id="ringtone-preset-btn" type="button" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-ios-purple/15 text-ios-purple border border-ios-purple/30 hover:bg-ios-purple/25 active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          iPhone Klingelton 30s
+        </button>
+      </div>
+
+      <div class="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-1">
+        <label for="custom-filename-input" class="block text-xs font-semibold text-gray-200">
+          ✏️ Wunsch-Dateiname (ohne Endung)
         </label>
-      </div>
-    </div>
-
-    <!-- 4. ID3 Metadata Editor Accordion -->
-    <details class="bg-black/40 rounded-2xl border border-white/5 group">
-      <summary class="p-3 text-xs font-semibold text-gray-300 cursor-pointer flex justify-between items-center select-none">
-        <span class="flex items-center gap-1.5">🏷️ ID3-Metadaten / MP3-Tags bearbeiten</span>
-        <svg class="w-4 h-4 text-ios-textMuted group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-      </summary>
-      <div class="p-3.5 pt-1 space-y-2 border-t border-white/5">
-        <div>
-          <label class="block text-[10px] text-ios-textMuted mb-0.5">Song-Titel</label>
-          <input type="text" id="tag-title" placeholder="z. B. Mein Audio Track" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2 border border-white/10 focus:outline-none focus:border-ios-blue">
-        </div>
-        <div>
-          <label class="block text-[10px] text-ios-textMuted mb-0.5">Künstler / Interpret</label>
-          <input type="text" id="tag-artist" placeholder="z. B. AudioForge iOS" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2 border border-white/10 focus:outline-none focus:border-ios-blue">
-        </div>
-        <div>
-          <label class="block text-[10px] text-ios-textMuted mb-0.5">Album</label>
-          <input type="text" id="tag-album" placeholder="z. B. Extraktion 2026" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2 border border-white/10 focus:outline-none focus:border-ios-blue">
-        </div>
-      </div>
-    </details>
-
-    <!-- 5. Output Format & Bitrate -->
-    <div>
-      <label class="block text-xs font-semibold text-gray-300 mb-2">Ausgabeformat & Qualität</label>
-      <div class="grid grid-cols-3 gap-2 mb-3">
-        <button id="format-mp3" type="button" class="format-btn py-2 px-2 rounded-xl border border-ios-blue bg-ios-blue/20 text-ios-blue text-xs font-semibold text-center transition-all cursor-pointer">
-          MP3 (Klein)
-        </button>
-        <button id="format-wav" type="button" class="format-btn py-2 px-2 rounded-xl border border-gray-700 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center transition-all cursor-pointer">
-          WAV (HD)
-        </button>
-        <button id="format-m4r" type="button" class="format-btn py-2 px-2 rounded-xl border border-gray-700 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center transition-all cursor-pointer">
-          M4R (Klingelton)
-        </button>
+        <input type="text" id="custom-filename-input" placeholder="z. B. Mein_Lieblingslied" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-ios-blue transition-all">
       </div>
 
-      <!-- MP3 Specific Settings -->
-      <div id="mp3-settings" class="space-y-3 p-3 bg-black/40 rounded-2xl border border-white/5">
-        <div>
-          <div class="flex justify-between text-[11px] text-gray-300 mb-1">
-            <span>Audio Bitrate</span>
-            <span id="bitrate-val" class="text-ios-blue font-bold">128 kbps (Standard)</span>
+      <div class="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-2">
+        <div class="flex justify-between items-center text-xs font-semibold">
+          <span class="text-gray-200">✂️ Audio zuschneiden</span>
+          <span id="trim-range-val" class="text-ios-blue font-mono font-bold">00:00 - Max</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] text-ios-textMuted mb-1">Start (Sek)</label>
+            <input type="number" id="trim-start" min="0" value="0" step="1" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2 border border-white/10 focus:outline-none focus:border-ios-blue">
           </div>
-          <select id="bitrate-select" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-ios-blue cursor-pointer">
-            <option value="64">64 kbps (Extrem klein ~1.5 MB - Für Sprache)</option>
-            <option value="128" selected>128 kbps (Standard ~3.5 MB - Für Musik)</option>
-            <option value="192">192 kbps (Hohe Qualität ~5.5 MB)</option>
-            <option value="320">320 kbps (Max. Qualität ~9 MB)</option>
-          </select>
-        </div>
-
-        <div>
-          <div class="flex justify-between text-[11px] text-gray-300 mb-1">
-            <span>Kanäle</span>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button id="channel-stereo" type="button" class="channel-btn py-2 px-2 rounded-lg border border-ios-blue bg-ios-blue/20 text-ios-blue text-[11px] font-medium text-center transition-all cursor-pointer">
-              Stereo (2 Kanäle)
-            </button>
-            <button id="channel-mono" type="button" class="channel-btn py-2 px-2 rounded-lg border border-gray-700 bg-ios-cardHover text-gray-400 text-[11px] font-medium text-center transition-all cursor-pointer">
-              Mono (Halbe Größe)
-            </button>
+          <div>
+            <label class="block text-[11px] text-ios-textMuted mb-1">Ende (0 = Max)</label>
+            <input type="number" id="trim-end" min="0" value="0" step="1" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2 border border-white/10 focus:outline-none focus:border-ios-blue">
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <button id="convert-btn" type="button" disabled class="w-full py-4 rounded-2xl bg-gradient-to-r from-ios-blue via-indigo-600 to-ios-indigo disabled:opacity-40 disabled:from-gray-800 disabled:to-gray-800 disabled:text-gray-500 text-white font-bold text-sm shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mb-4 cursor-pointer">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-    </svg>
-    <span id="convert-btn-text">Jetzt Audio extrahieren</span>
-  </button>
-
-  <div id="progress-box" class="hidden w-full bg-ios-card rounded-2xl p-4 mb-4 border border-white/5 shadow-xl">
-    <div class="flex justify-between text-xs mb-2">
-      <span id="progress-status" class="text-gray-300 font-medium">Verarbeite...</span>
-      <span id="progress-percent" class="text-ios-blue font-bold font-mono">0%</span>
-    </div>
-    <div class="w-full h-2.5 bg-gray-800 rounded-full overflow-hidden">
-      <div id="progress-bar" class="h-full bg-gradient-to-r from-ios-blue to-ios-purple w-0 transition-all duration-300"></div>
-    </div>
-  </div>
-
-  <div id="result-box" class="hidden w-full bg-ios-card rounded-3xl p-5 shadow-2xl border border-emerald-500/30 text-center animate-fadeIn">
-    <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/20">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-      </svg>
-    </div>
-    <h3 class="text-base font-bold text-white mb-0.5">Audio erfolgreich extrahiert!</h3>
-    <p id="result-info" class="text-xs text-ios-textMuted mb-3">Bereit zum Anhören & Download</p>
-
-    <!-- Quick Filename Edit Box before saving -->
-    <div class="bg-black/50 p-3 rounded-2xl border border-white/10 mb-4 text-left">
-      <label for="result-filename-edit" class="block text-[11px] font-semibold text-gray-300 mb-1">
-        💾 Speichern als (Dateiname anpassen):
-      </label>
-      <input type="text" id="result-filename-edit" class="w-full bg-ios-cardHover text-white text-xs font-medium rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-ios-blue">
-    </div>
-
-    <!-- Waveform Visualizer & Player -->
-    <div class="bg-black/60 p-3 rounded-2xl border border-white/10 mb-5">
-      <div class="flex items-center justify-between text-xs text-ios-textMuted mb-2">
-        <span class="font-semibold text-gray-300 flex items-center gap-1">
-          <svg class="w-3.5 h-3.5 text-ios-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-2"/></svg>
-          Sound-Wellenform
-        </span>
-        <span id="player-time" class="font-mono">00:00 / 00:00</span>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+          <div class="flex justify-between text-[11px] font-semibold mb-1">
+            <span class="text-gray-300">Fade In / Out</span>
+            <span id="fade-val" class="text-ios-blue font-bold">0s / 0s</span>
+          </div>
+          <div class="space-y-2 mt-2">
+            <input type="range" id="fade-in-slider" min="0" max="5" value="0" step="0.5" class="w-full accent-ios-blue">
+            <input type="range" id="fade-out-slider" min="0" max="5" value="0" step="0.5" class="w-full accent-ios-blue">
+          </div>
+        </div>
+        <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+          <div class="flex justify-between text-[11px] font-semibold mb-1">
+            <span class="text-gray-300">Geschwindigkeit</span>
+            <span id="speed-val" class="text-ios-blue font-bold">1.0x</span>
+          </div>
+          <input type="range" id="speed-slider" min="0.5" max="2.0" value="1.0" step="0.25" class="w-full accent-ios-blue mt-3">
+          <div class="flex justify-between text-[9px] text-ios-textMuted mt-1"><span>0.5x</span><span>1.0x</span><span>2.0x</span></div>
+        </div>
       </div>
-      <canvas id="waveform-canvas" class="w-full h-16 rounded-xl bg-black cursor-pointer border border-white/5 mb-3"></canvas>
+
+      <div class="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-2">
+        <div class="flex justify-between items-center">
+          <div>
+            <span class="text-xs font-semibold text-gray-200 block">Lautstärke-Verstärkung</span>
+            <span class="text-[10px] text-ios-textMuted">Bis zu 300% verstärken</span>
+          </div>
+          <span id="volume-val" class="text-xs text-ios-blue font-bold font-mono">100%</span>
+        </div>
+        <input type="range" id="volume-slider" min="50" max="300" value="100" class="w-full accent-ios-blue">
+        <div class="pt-2 border-t border-white/5 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-semibold text-gray-200 block">🎙️ Sprach- & Stimm-Booster</span>
+            <span class="text-[10px] text-ios-textMuted">Rauschfilter & Vocal Peak</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="voice-boost-toggle" class="sr-only peer">
+            <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-ios-green"></div>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-300 mb-2">Ausgabeformat & Qualität</label>
+        <div class="grid grid-cols-3 gap-2 mb-3">
+          <button id="format-mp3" type="button" class="format-btn py-2 px-2 rounded-xl border border-ios-blue bg-ios-blue/20 text-ios-blue text-xs font-semibold text-center cursor-pointer">MP3 (Klein)</button>
+          <button id="format-wav" type="button" class="format-btn py-2 px-2 rounded-xl border border-gray-700 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center cursor-pointer">WAV (HD)</button>
+          <button id="format-m4r" type="button" class="format-btn py-2 px-2 rounded-xl border border-gray-700 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center cursor-pointer">M4R (Ring)</button>
+        </div>
+        <div id="mp3-settings" class="space-y-3 p-3 bg-black/40 rounded-2xl border border-white/5">
+          <div>
+            <div class="flex justify-between text-[11px] text-gray-300 mb-1">
+              <span>Bitrate</span><span id="bitrate-val" class="text-ios-blue font-bold">128 kbps</span>
+            </div>
+            <select id="bitrate-select" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-ios-blue cursor-pointer">
+              <option value="64">64 kbps (Sprache ~1.5 MB)</option>
+              <option value="128" selected>128 kbps (Standard ~3.5 MB)</option>
+              <option value="192">192 kbps (Hoch ~5.5 MB)</option>
+              <option value="320">320 kbps (Max ~9 MB)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button id="convert-btn" type="button" disabled class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-ios-blue via-indigo-600 to-ios-indigo disabled:opacity-40 disabled:from-gray-800 disabled:to-gray-800 disabled:text-gray-500 text-white font-bold text-sm shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 mb-4 cursor-pointer">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      <span id="convert-btn-text">Jetzt Audio extrahieren</span>
+    </button>
+
+    <div id="progress-box" class="hidden w-full bg-ios-card rounded-2xl p-4 mb-4 border border-white/5 shadow-xl">
+      <div class="flex justify-between text-xs mb-2">
+        <span id="progress-status" class="text-gray-300 font-medium">Verarbeite...</span>
+        <span id="progress-percent" class="text-ios-blue font-bold font-mono">0%</span>
+      </div>
+      <div class="w-full h-2.5 bg-gray-800 rounded-full overflow-hidden">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-ios-blue to-ios-purple w-0 transition-all duration-300"></div>
+      </div>
+    </div>
+
+    <div id="result-box" class="hidden w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-emerald-500/30 text-center">
+      <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-3 shadow-lg">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <h3 class="text-base font-bold text-white mb-0.5">Audio erfolgreich extrahiert!</h3>
+      <p id="result-info" class="text-xs text-ios-textMuted mb-3">Bereit zum Anhören & Download</p>
       
-      <!-- Built-in Custom Player Controls -->
-      <div class="flex items-center justify-center gap-4">
-        <button id="player-play-btn" type="button" class="w-10 h-10 rounded-full bg-ios-blue text-white flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer">
-          <svg id="play-icon" class="w-5 h-5 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          <svg id="pause-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      <div class="bg-black/50 p-3 rounded-2xl border border-white/10 mb-3 text-left">
+        <label for="result-filename-edit" class="block text-[11px] font-semibold text-gray-300 mb-1">💾 Dateiname anpassen:</label>
+        <input type="text" id="result-filename-edit" class="w-full bg-ios-cardHover text-white text-xs font-medium rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-ios-blue">
+      </div>
+
+      <div class="bg-black/60 p-3 rounded-2xl border border-white/10 mb-4">
+        <div class="flex items-center justify-between text-xs text-ios-textMuted mb-2">
+          <span class="font-semibold text-gray-300 flex items-center gap-1">
+            <i class="fa-solid fa-waveform text-ios-blue"></i> Wellenform
+          </span>
+          <span id="player-time" class="font-mono">00:00 / 00:00</span>
+        </div>
+        <canvas id="waveform-canvas" class="w-full h-14 rounded-xl bg-black cursor-pointer border border-white/5 mb-3"></canvas>
+        <div class="flex items-center justify-center gap-4">
+          <button id="player-play-btn" type="button" class="w-10 h-10 rounded-full bg-ios-blue text-white flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer">
+            <i id="play-icon" class="fa-solid fa-play ml-0.5"></i>
+            <i id="pause-icon" class="fa-solid fa-pause hidden"></i>
+          </button>
+        </div>
+        <audio id="result-audio-player" class="hidden"></audio>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <button id="download-btn" type="button" class="w-full py-3 rounded-xl bg-emerald-500 text-black font-bold text-sm shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
+          <i class="fa-solid fa-download"></i> Audio herunterladen
+        </button>
+        <button id="batch-zip-btn" type="button" class="hidden w-full py-3 rounded-xl bg-ios-indigo text-white font-bold text-sm shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
+          <i class="fa-solid fa-file-zipper"></i> Alle als ZIP herunterladen
+        </button>
+        <!-- Send extracted audio directly to iMusic Library button -->
+        <button id="send-to-imusic-btn" type="button" class="w-full py-3 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-pink-600/20">
+          <i class="fa-solid fa-plus-circle"></i> Direkt zu iMusic Library hinzufügen
         </button>
       </div>
-      <audio id="result-audio-player" class="hidden"></audio>
+    </div>
+  </div>
+
+
+  <!-- ==================== APP 2: IMUSIC LIBRARY & PLAYER ==================== -->
+  <div id="app-imusic" class="w-full flex flex-col hidden relative">
+    <!-- Header -->
+    <header class="pt-2 pb-3 glass-panel sticky top-0 z-30 border-b border-white/10 flex items-center justify-between mb-2">
+      <div>
+        <h2 id="imusic-header-title" class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+          iMusic Bibliothek
+        </h2>
+        <p id="imusic-header-subtitle" class="text-[11px] text-slate-400 font-medium">Alle Titel & Songs</p>
+      </div>
+      
+      <div class="flex items-center space-x-2">
+        <label for="imusic-audio-file-input" class="cursor-pointer h-9 w-9 rounded-full bg-pink-600 hover:bg-pink-500 active:scale-95 transition flex items-center justify-center text-white shadow-lg shadow-pink-600/30">
+          <i class="fa-solid font-bold fa-plus text-xs"></i>
+        </label>
+        <input type="file" id="imusic-audio-file-input" accept="audio/*" multiple class="hidden">
+
+        <button onclick="toggleEqModal()" class="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition flex items-center justify-center text-white">
+          <i class="fa-solid fa-sliders text-xs"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Search Bar -->
+    <div class="pb-2">
+      <div class="relative flex items-center">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-slate-400 text-xs"></i>
+        <input type="text" id="imusic-search-input" placeholder="In Bibliothek suchen..." class="w-full pl-9 pr-4 py-2 bg-white/10 text-white placeholder-slate-400 text-xs rounded-xl outline-none focus:ring-2 focus:ring-pink-500 transition">
+      </div>
     </div>
 
-    <!-- Download & Share Buttons -->
-    <div class="flex flex-col gap-2.5">
-      <button id="download-btn" type="button" class="w-full py-3.5 rounded-xl bg-emerald-500 text-black font-bold text-sm shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-        </svg>
-        <span>Audio herunterladen</span>
-      </button>
-
-      <!-- Batch ZIP Download Button (Shown in Batch Mode) -->
-      <button id="batch-zip-btn" type="button" class="hidden w-full py-3.5 rounded-xl bg-ios-indigo text-white font-bold text-sm shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-        <span>Alle als ZIP herunterladen</span>
-      </button>
-
-      <!-- iOS Share Button -->
-      <button id="share-btn" type="button" class="w-full py-3 rounded-xl bg-ios-cardHover border border-white/10 text-ios-blue font-semibold text-xs active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684"/>
-        </svg>
-        <span>In Datei-App speichern / Teilen</span>
-      </button>
+    <!-- Category Chips -->
+    <div class="flex space-x-2 mb-3 overflow-x-auto no-scrollbar py-1">
+      <button onclick="filterImusicCategory('all')" id="tab-imusic-all" class="imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-pink-600 text-white shadow-md transition whitespace-nowrap">Alle Songs</button>
+      <button onclick="filterImusicCategory('favorites')" id="tab-imusic-favorites" class="imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap">Favoriten</button>
+      <button onclick="filterImusicCategory('playlists')" id="tab-imusic-playlists" class="imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap">Playlists</button>
+      <button onclick="filterImusicCategory('artists')" id="tab-imusic-artists" class="imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap">Künstler</button>
     </div>
+
+    <!-- Main List Container -->
+    <div id="imusic-songs-container" class="space-y-2 pb-36">
+      <!-- Songs populated dynamically -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="imusic-empty-state" class="hidden py-14 flex flex-col items-center justify-center text-center">
+      <div class="w-16 h-16 rounded-full bg-pink-500/10 text-pink-500 flex items-center justify-center mb-3 text-2xl shadow-inner">
+        <i class="fa-solid fa-music"></i>
+      </div>
+      <h3 class="text-base font-semibold text-white">Keine Musik in iMusic</h3>
+      <p class="text-xs text-slate-400 max-w-xs mt-1">Füge Lieder direkt aus dem AudioForge Converter hinzu oder lade MP3s hoch.</p>
+    </div>
+
+    <!-- Playlists View -->
+    <div id="imusic-playlists-view" class="hidden space-y-3 pb-36">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-xs font-bold text-slate-300 uppercase">Deine Playlists</h3>
+        <button onclick="showCreatePlaylistDialog()" class="text-xs text-pink-500 hover:text-pink-400 font-semibold">+ Neue Playlist</button>
+      </div>
+      <div id="imusic-playlists-grid" class="grid grid-cols-2 gap-3"></div>
+    </div>
+
+    <!-- Artists View -->
+    <div id="imusic-artists-view" class="hidden space-y-2 pb-36"></div>
+
+    <!-- iMusic Mini Player Bar -->
+    <div id="imusic-mini-player" class="absolute bottom-2 left-0 right-0 glass-panel rounded-2xl border border-white/10 p-2.5 shadow-2xl flex items-center justify-between z-40 cursor-pointer active:scale-[0.99] transition-transform" onclick="openFullPlayer()">
+      <div class="flex items-center space-x-3 overflow-hidden flex-1 mr-2">
+        <div id="imusic-mini-cover" class="w-10 h-10 rounded-lg bg-slate-800 flex-shrink-0 bg-cover bg-center flex items-center justify-center shadow-md border border-white/10">
+          <i class="fa-solid fa-music text-slate-500 text-xs"></i>
+        </div>
+        <div class="overflow-hidden flex-1">
+          <h4 id="imusic-mini-title" class="text-xs font-bold text-white truncate">Kein Titel ausgewählt</h4>
+          <p id="imusic-mini-artist" class="text-[10px] text-slate-400 truncate">Wähle Musik aus</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+        <button id="imusic-mini-play-btn" onclick="togglePlayPause()" class="w-9 h-9 rounded-full flex items-center justify-center text-white hover:text-pink-500 active:scale-90 transition">
+          <i class="fa-solid fa-play text-sm"></i>
+        </button>
+        <button onclick="playNextSong()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white active:scale-90 transition">
+          <i class="fa-solid fa-forward-step text-xs"></i>
+        </button>
+      </div>
+      <div class="absolute bottom-0 left-2 right-2 h-0.5 bg-white/10 rounded-full overflow-hidden">
+        <div id="imusic-mini-progress-fill" class="h-full bg-pink-500 w-0 transition-all duration-200"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==================== IMUSIC FULLSCREEN PLAYER MODAL ==================== -->
+  <div id="full-player-modal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex flex-col justify-between p-6 transform translate-y-full player-modal-slide">
+    <div class="flex items-center justify-between pt-4">
+      <button onclick="closeFullPlayer()" class="text-slate-400 hover:text-white p-2 text-lg active:scale-90 transition"><i class="fa-solid fa-chevron-down"></i></button>
+      <div class="text-center">
+        <span class="text-[10px] uppercase font-bold tracking-widest text-pink-500">Wird abgespielt</span>
+        <h3 id="full-playlist-name" class="text-xs text-slate-400 font-medium">iMusic Bibliothek</h3>
+      </div>
+      <button onclick="toggleVisualizerMode()" id="vis-toggle-btn" class="text-slate-400 hover:text-pink-400 p-2 text-sm transition"><i class="fa-solid fa-chart-simple"></i></button>
+    </div>
+
+    <div class="relative my-auto flex flex-col items-center justify-center">
+      <div class="relative w-60 h-60 sm:w-72 sm:h-72 rounded-2xl shadow-2xl overflow-hidden border border-white/10 flex items-center justify-center bg-slate-900">
+        <div id="full-cover" class="w-full h-full bg-cover bg-center flex items-center justify-center">
+          <i id="full-cover-icon" class="fa-solid fa-compact-disc text-6xl text-slate-700"></i>
+        </div>
+        <canvas id="visualizer-canvas" class="absolute inset-0 w-full h-full opacity-80 pointer-events-none hidden"></canvas>
+      </div>
+    </div>
+
+    <div class="space-y-1 mb-2">
+      <div class="flex items-center justify-between">
+        <div class="overflow-hidden pr-3">
+          <h2 id="full-title" class="text-lg font-extrabold text-white truncate">Kein Titel</h2>
+          <p id="full-artist" class="text-xs font-medium text-pink-500 truncate mt-0.5">Unbekannter Künstler</p>
+        </div>
+        <button id="full-fav-btn" onclick="toggleCurrentFavorite()" class="p-2 text-slate-500 hover:text-pink-500 text-lg transition"><i class="fa-regular fa-heart"></i></button>
+      </div>
+    </div>
+
+    <div class="space-y-1.5">
+      <input type="range" id="seek-bar" value="0" min="0" max="100" class="w-full">
+      <div class="flex justify-between text-[11px] font-semibold text-slate-400 tracking-wider">
+        <span id="current-time">0:00</span><span id="total-duration">0:00</span>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between px-2 py-2">
+      <button id="shuffle-btn" onclick="toggleShuffle()" class="text-slate-400 hover:text-white p-2 text-sm transition"><i class="fa-solid fa-shuffle"></i></button>
+      <button onclick="playPrevSong()" class="text-white hover:text-pink-500 p-2 text-2xl active:scale-90 transition"><i class="fa-solid fa-backward-step"></i></button>
+      <button id="full-play-btn" onclick="togglePlayPause()" class="w-14 h-14 rounded-full bg-pink-600 hover:bg-pink-500 text-white flex items-center justify-center text-xl shadow-xl active:scale-95 transition"><i class="fa-solid fa-play"></i></button>
+      <button onclick="playNextSong()" class="text-white hover:text-pink-500 p-2 text-2xl active:scale-90 transition"><i class="fa-solid fa-forward-step"></i></button>
+      <button id="repeat-btn" onclick="toggleRepeat()" class="text-slate-400 hover:text-white p-2 text-sm transition"><i class="fa-solid fa-repeat"></i></button>
+    </div>
+
+    <div class="flex items-center space-x-3 px-2 pt-1 pb-3">
+      <i class="fa-solid fa-volume-low text-xs text-slate-400"></i>
+      <input type="range" id="volume-bar" value="100" min="0" max="100" class="w-full">
+      <i class="fa-solid fa-volume-high text-xs text-slate-400"></i>
+    </div>
+  </div>
+
+
+  <!-- ==================== EQUALIZER MODAL ==================== -->
+  <div id="eq-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-5">
+    <div class="glass-card w-full max-w-xs rounded-2xl p-5 border border-white/10 space-y-4">
+      <div class="flex justify-between items-center border-b border-white/10 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-pink-500"></i> Equalizer Presets
+        </h3>
+        <button onclick="toggleEqModal()" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-2">
+        <button onclick="setEqPreset('flat')" class="eq-preset-btn w-full py-2 px-3 rounded-xl bg-pink-600/30 border border-pink-500 text-xs font-semibold text-white text-left flex justify-between items-center"><span>Flat / Neutral</span> <i class="fa-solid fa-check text-pink-400 text-xs"></i></button>
+        <button onclick="setEqPreset('bass')" class="eq-preset-btn w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold text-slate-300 text-left flex justify-between items-center"><span>Bass Boost</span></button>
+        <button onclick="setEqPreset('vocal')" class="eq-preset-btn w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold text-slate-300 text-left flex justify-between items-center"><span>Vocal Enhancer</span></button>
+        <button onclick="setEqPreset('treble')" class="eq-preset-btn w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold text-slate-300 text-left flex justify-between items-center"><span>Treble Boost</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Box -->
+  <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-white/15 px-4 py-2 rounded-full shadow-2xl text-xs text-white opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-2">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-msg">Nachricht</span>
   </div>
 
   <script>
-    let mode = 'single'; // 'single' or 'batch'
-    let selectedFiles = []; // Array of Files
-    let selectedFormat = 'mp3'; // 'mp3', 'wav', 'm4r'
+    /* ========================================================
+       MASTER APP SWITCHER LOGIC
+       ======================================================== */
+    function switchApp(appName) {
+      const welcomeEl = document.getElementById('app-welcome');
+      const convEl = document.getElementById('app-converter');
+      const imusicEl = document.getElementById('app-imusic');
+      const masterHeader = document.getElementById('master-header');
+      const btnWelcome = document.getElementById('nav-btn-welcome');
+      const btnConv = document.getElementById('nav-btn-converter');
+      const btnImusic = document.getElementById('nav-btn-imusic');
+
+      welcomeEl.classList.add('hidden');
+      convEl.classList.add('hidden');
+      imusicEl.classList.add('hidden');
+      masterHeader.classList.add('hidden');
+
+      if (appName === 'welcome') {
+        welcomeEl.classList.remove('hidden');
+      } else if (appName === 'converter') {
+        convEl.classList.remove('hidden');
+        masterHeader.classList.remove('hidden');
+        btnConv.className = "flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-ios-blue shadow transition-all cursor-pointer flex items-center justify-center gap-1.5";
+        btnImusic.className = "flex-1 py-2.5 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5";
+        btnWelcome.className = "py-2.5 px-3 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center";
+      } else {
+        imusicEl.classList.remove('hidden');
+        masterHeader.classList.remove('hidden');
+        btnImusic.className = "flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-pink-600 shadow transition-all cursor-pointer flex items-center justify-center gap-1.5";
+        btnConv.className = "flex-1 py-2.5 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5";
+        btnWelcome.className = "py-2.5 px-3 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center";
+        renderImusicSongs();
+      }
+    }
+
+    function showToast(msg, iconClass = "fa-solid fa-circle-check text-emerald-400") {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+      toastMsg.innerText = msg;
+      toastIcon.className = iconClass;
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+    }
+
+
+    /* ========================================================
+       APP 1: AUDIOFORGE CONVERTER ENGINE
+       ======================================================== */
+    let mode = 'single';
+    let selectedFiles = [];
+    let selectedFormat = 'mp3';
     let selectedBitrate = 128;
     let selectedChannels = 'stereo';
-    
-    // Extracted / Generated output storage
     let generatedBlob = null;
     let generatedFileName = '';
     let batchResults = [];
@@ -421,7 +681,6 @@
     const batchList = document.getElementById('batch-list');
     const batchCount = document.getElementById('batch-count');
     
-    // Editing Controls
     const customFilenameInput = document.getElementById('custom-filename-input');
     const resultFilenameEdit = document.getElementById('result-filename-edit');
     const trimStartInput = document.getElementById('trim-start');
@@ -436,19 +695,13 @@
     const volumeSlider = document.getElementById('volume-slider');
     const volumeVal = document.getElementById('volume-val');
     const voiceBoostToggle = document.getElementById('voice-boost-toggle');
-    const tagTitle = document.getElementById('tag-title');
-    const tagArtist = document.getElementById('tag-artist');
-    const tagAlbum = document.getElementById('tag-album');
 
-    // Format & Action Controls
     const formatMp3 = document.getElementById('format-mp3');
     const formatWav = document.getElementById('format-wav');
     const formatM4r = document.getElementById('format-m4r');
     const mp3Settings = document.getElementById('mp3-settings');
     const bitrateSelect = document.getElementById('bitrate-select');
     const bitrateVal = document.getElementById('bitrate-val');
-    const channelStereo = document.getElementById('channel-stereo');
-    const channelMono = document.getElementById('channel-mono');
     const convertBtn = document.getElementById('convert-btn');
     const convertBtnText = document.getElementById('convert-btn-text');
     const errorBanner = document.getElementById('error-banner');
@@ -461,7 +714,7 @@
     const resultInfo = document.getElementById('result-info');
     const downloadBtn = document.getElementById('download-btn');
     const batchZipBtn = document.getElementById('batch-zip-btn');
-    const shareBtn = document.getElementById('share-btn');
+    const sendToImusicBtn = document.getElementById('send-to-imusic-btn');
     const waveformCanvas = document.getElementById('waveform-canvas');
     const playerPlayBtn = document.getElementById('player-play-btn');
     const playIcon = document.getElementById('play-icon');
@@ -469,10 +722,10 @@
     const playerTime = document.getElementById('player-time');
     const resultAudioPlayer = document.getElementById('result-audio-player');
 
-    tabSingle.addEventListener('click', () => setMode('single'));
-    tabBatch.addEventListener('click', () => setMode('batch'));
+    tabSingle.addEventListener('click', () => setConvMode('single'));
+    tabBatch.addEventListener('click', () => setConvMode('batch'));
 
-    function setMode(newMode) {
+    function setConvMode(newMode) {
       mode = newMode;
       hideError();
       resultBox.classList.add('hidden');
@@ -510,21 +763,15 @@
       bitrateVal.innerText = `${selectedBitrate} kbps`;
     });
 
-    channelStereo.addEventListener('click', () => setChannel('stereo'));
-    channelMono.addEventListener('click', () => setChannel('mono'));
-
     function setFormat(fmt) {
       selectedFormat = fmt;
-      const baseBtnClass = "format-btn py-2 px-2 rounded-xl border text-xs font-semibold text-center transition-all cursor-pointer ";
+      const baseBtnClass = "format-btn py-2 px-2 rounded-xl border text-xs font-semibold text-center cursor-pointer transition-all ";
       formatMp3.className = baseBtnClass + (fmt === 'mp3' ? "border-ios-blue bg-ios-blue/20 text-ios-blue" : "border-gray-700 bg-ios-cardHover text-gray-400");
       formatWav.className = baseBtnClass + (fmt === 'wav' ? "border-ios-blue bg-ios-blue/20 text-ios-blue" : "border-gray-700 bg-ios-cardHover text-gray-400");
       formatM4r.className = baseBtnClass + (fmt === 'm4r' ? "border-ios-purple bg-ios-purple/20 text-ios-purple" : "border-gray-700 bg-ios-cardHover text-gray-400");
 
-      if (fmt === 'mp3') {
-        mp3Settings.classList.remove('hidden');
-      } else {
-        mp3Settings.classList.add('hidden');
-      }
+      if (fmt === 'mp3') mp3Settings.classList.remove('hidden');
+      else mp3Settings.classList.add('hidden');
 
       if (resultFilenameEdit.value) {
         let nameWithoutExt = resultFilenameEdit.value.replace(/\.[^/.]+$/, "");
@@ -534,23 +781,10 @@
       }
     }
 
-    function setChannel(ch) {
-      selectedChannels = ch;
-      if (ch === 'stereo') {
-        channelStereo.className = "channel-btn py-2 px-2 rounded-lg border border-ios-blue bg-ios-blue/20 text-ios-blue text-[11px] font-medium text-center transition-all cursor-pointer";
-        channelMono.className = "channel-btn py-2 px-2 rounded-lg border border-gray-700 bg-ios-cardHover text-gray-400 text-[11px] font-medium text-center transition-all cursor-pointer";
-      } else {
-        channelMono.className = "channel-btn py-2 px-2 rounded-lg border border-ios-blue bg-ios-blue/20 text-ios-blue text-[11px] font-medium text-center transition-all cursor-pointer";
-        channelStereo.className = "channel-btn py-2 px-2 rounded-lg border border-gray-700 bg-ios-cardHover text-gray-400 text-[11px] font-medium text-center transition-all cursor-pointer";
-      }
-    }
-
     volumeSlider.addEventListener('input', (e) => volumeVal.innerText = `${e.target.value}%`);
     speedSlider.addEventListener('input', (e) => speedVal.innerText = `${parseFloat(e.target.value).toFixed(2)}x`);
     
-    function updateFadeDisplay() {
-      fadeVal.innerText = `${fadeInSlider.value}s / ${fadeOutSlider.value}s`;
-    }
+    function updateFadeDisplay() { fadeVal.innerText = `${fadeInSlider.value}s / ${fadeOutSlider.value}s`; }
     fadeInSlider.addEventListener('input', updateFadeDisplay);
     fadeOutSlider.addEventListener('input', updateFadeDisplay);
 
@@ -573,7 +807,7 @@
       trimStartInput.value = 0;
       trimEndInput.value = 30;
       updateTrimDisplay();
-      showToast("iPhone Klingelton-Modus: Max. 30s Trimming & M4R aktiviert!");
+      showToast("Klingelton-Modus aktiv: 30s M4R", "fa-solid fa-bell text-ios-purple");
     });
 
     fileInputSingle.addEventListener('change', (e) => {
@@ -594,19 +828,12 @@
       hideError();
       resultBox.classList.add('hidden');
       progressBox.classList.add('hidden');
-      
       fileNameDisplay.innerText = file.name;
       const originalBaseName = file.name.replace(/\.[^/.]+$/, "");
-      if (!customFilenameInput.value.trim()) {
-        customFilenameInput.value = originalBaseName;
-      }
-      if (!tagTitle.value.trim()) {
-        tagTitle.value = originalBaseName;
-      }
+      if (!customFilenameInput.value.trim()) customFilenameInput.value = originalBaseName;
 
       const url = URL.createObjectURL(file);
       videoPreview.src = url;
-
       videoPreview.onloadedmetadata = () => {
         const dur = Math.floor(videoPreview.duration);
         if (dur && !trimEndInput.value) {
@@ -624,23 +851,14 @@
       hideError();
       resultBox.classList.add('hidden');
       progressBox.classList.add('hidden');
-
       batchCount.innerText = files.length;
       batchList.innerHTML = '';
-
       files.forEach((f) => {
         const item = document.createElement('div');
         item.className = "flex items-center justify-between bg-black/40 p-2.5 rounded-xl border border-white/5 text-xs";
-        item.innerHTML = `
-          <div class="flex items-center gap-2 overflow-hidden mr-2">
-            <span class="w-2 h-2 rounded-full bg-ios-blue shrink-0"></span>
-            <span class="text-gray-200 font-medium truncate">${f.name}</span>
-          </div>
-          <span class="text-[10px] text-ios-textMuted font-mono shrink-0">${(f.size / (1024 * 1024)).toFixed(1)} MB</span>
-        `;
+        item.innerHTML = `<div class="flex items-center gap-2 overflow-hidden mr-2"><span class="w-2 h-2 rounded-full bg-ios-blue shrink-0"></span><span class="text-gray-200 font-medium truncate">${f.name}</span></div><span class="text-[10px] text-ios-textMuted font-mono shrink-0">${(f.size / (1024 * 1024)).toFixed(1)} MB</span>`;
         batchList.appendChild(item);
       });
-
       uploadBox.classList.add('hidden');
       batchBox.classList.remove('hidden');
       checkConvertButtonState();
@@ -656,37 +874,11 @@
       }
     }
 
-    function showError(msg) {
-      errorMessage.innerText = msg;
-      errorBanner.classList.remove('hidden');
-    }
-
-    function hideError() {
-      errorBanner.classList.add('hidden');
-    }
-
-    function showToast(msg) {
-      const toast = document.createElement('div');
-      toast.className = "fixed bottom-5 left-1/2 -translate-x-1/2 bg-ios-cardHover border border-white/10 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-2xl z-50 animate-bounce";
-      toast.innerText = msg;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
-    }
-
-    resultFilenameEdit.addEventListener('input', (e) => {
-      generatedFileName = e.target.value.trim();
-    });
+    function showError(msg) { errorMessage.innerText = msg; errorBanner.classList.remove('hidden'); }
+    function hideError() { errorBanner.classList.add('hidden'); }
 
     convertBtn.addEventListener('click', async () => {
       if (selectedFiles.length === 0) return;
-
-      // Ensure iOS Web Audio Context is unlocked on user tap
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        const dummyCtx = new AudioCtx();
-        if (dummyCtx.state === 'suspended') dummyCtx.resume();
-      }
-
       hideError();
       convertBtn.disabled = true;
       progressBox.classList.remove('hidden');
@@ -703,25 +895,18 @@
       try {
         updateProgress(10, 'Datei wird geladen...');
         let rawAudioBuffer = await extractAudioFromFile(file);
-
-        if (!rawAudioBuffer) {
-          throw new Error("Das Video enthält keine lesbare Tonspur.");
-        }
+        if (!rawAudioBuffer) throw new Error("Das Video enthält keine lesbare Tonspur.");
 
         const userCustomName = customFilenameInput.value.trim();
         const baseName = userCustomName ? userCustomName.replace(/[/\\?%*:|"<>]/g, '_') : file.name.replace(/\.[^/.]+$/, "");
 
-        updateProgress(60, 'Wende Studio-Effekte & Trimming an...');
+        updateProgress(60, 'Wende Studio-Effekte an...');
         const processedBuffer = await applyAudioStudioEffects(rawAudioBuffer);
         loadedAudioBuffer = processedBuffer;
 
         updateProgress(85, `Erstelle ${selectedFormat.toUpperCase()}-Datei...`);
-        
         if (selectedFormat === 'mp3') {
-          generatedBlob = await audioBufferToMp3Blob(processedBuffer, selectedBitrate, selectedChannels === 'mono', (p) => {
-            updateProgress(85 + Math.floor(p * 0.12), `MP3 Komprimierung: ${Math.floor(p)}%`);
-          });
-          generatedBlob = attachID3Metadata(generatedBlob);
+          generatedBlob = await audioBufferToMp3Blob(processedBuffer, selectedBitrate, selectedChannels === 'mono');
           generatedFileName = `${baseName}.mp3`;
         } else if (selectedFormat === 'm4r') {
           generatedBlob = await audioBufferToMp3Blob(processedBuffer, 192, false);
@@ -731,46 +916,39 @@
           generatedFileName = `${baseName}.wav`;
         }
 
-        updateProgress(100, 'Fertigstellung...');
+        updateProgress(100, 'Fertig!');
         setTimeout(() => {
           progressBox.classList.add('hidden');
-          resultInfo.innerText = `${(generatedBlob.size / (1024 * 1024)).toFixed(2)} MB • Bereit zum Download`;
+          resultInfo.innerText = `${(generatedBlob.size / (1024 * 1024)).toFixed(2)} MB • Bereit`;
           resultFilenameEdit.value = generatedFileName;
           batchZipBtn.classList.add('hidden');
           resultBox.classList.remove('hidden');
           convertBtn.disabled = false;
           convertBtnText.innerText = "Erneut extrahieren";
-
           setupAudioPlayerAndWaveform(generatedBlob, processedBuffer);
         }, 300);
-
       } catch (err) {
         console.error(err);
-        showError(err.message || "Fehler bei der Audio-Konvertierung.");
+        showError(err.message || "Fehler bei Konvertierung.");
         progressBox.classList.add('hidden');
         convertBtn.disabled = false;
-        convertBtnText.innerText = "Erneut versuchen";
       }
     }
 
     async function processBatchVideos(files) {
       batchResults = [];
       const zip = new JSZip();
-
       try {
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          const pct = Math.floor((i / files.length) * 100);
-          updateProgress(pct, `Verarbeite Video ${i + 1} von ${files.length}: ${file.name}`);
-
+          updateProgress(Math.floor((i / files.length) * 100), `Verarbeite ${i + 1}/${files.length}: ${file.name}`);
           const rawAudioBuffer = await extractAudioFromFile(file);
           if (rawAudioBuffer) {
             const processedBuffer = await applyAudioStudioEffects(rawAudioBuffer);
             const baseName = file.name.replace(/\.[^/.]+$/, "");
             let blob, fname;
-
             if (selectedFormat === 'mp3') {
-              blob = await audioBufferToMp3Blob(processedBuffer, selectedBitrate, selectedChannels === 'mono');
+              blob = await audioBufferToMp3Blob(processedBuffer, selectedBitrate, false);
               fname = `${baseName}.mp3`;
             } else if (selectedFormat === 'm4r') {
               blob = await audioBufferToMp3Blob(processedBuffer, 192, false);
@@ -779,50 +957,40 @@
               blob = audioBufferToWavBlob(processedBuffer);
               fname = `${baseName}.wav`;
             }
-
             batchResults.push({ name: fname, blob });
             zip.file(fname, blob);
           }
         }
-
-        updateProgress(95, 'Erstelle ZIP-Archiv...');
+        updateProgress(95, 'Erstelle ZIP...');
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         generatedBlob = zipBlob;
-        const customBatchName = customFilenameInput.value.trim();
-        generatedFileName = customBatchName ? `${customBatchName.replace(/[/\\?%*:|"<>]/g, '_')}.zip` : `AudioForge_Batch_${Date.now()}.zip`;
+        generatedFileName = `AudioForge_Batch_${Date.now()}.zip`;
 
-        updateProgress(100, 'Alle Videos verarbeitet!');
+        updateProgress(100, 'Fertig!');
         setTimeout(() => {
           progressBox.classList.add('hidden');
-          resultInfo.innerText = `${files.length} Audiodateien verarbeitet (${(zipBlob.size / (1024 * 1024)).toFixed(2)} MB ZIP)`;
+          resultInfo.innerText = `${files.length} Audiodateien im ZIP`;
           resultFilenameEdit.value = generatedFileName;
           batchZipBtn.classList.remove('hidden');
           resultBox.classList.remove('hidden');
           convertBtn.disabled = false;
-          convertBtnText.innerText = "Erneut umwandeln";
         }, 300);
-
       } catch (err) {
-        console.error(err);
-        showError("Fehler bei der Stapelverarbeitung.");
+        showError("Fehler bei Batch.");
         progressBox.classList.add('hidden');
         convertBtn.disabled = false;
       }
     }
 
-    function updateProgress(percent, status) {
-      progressBar.style.width = `${percent}%`;
-      progressPercent.innerText = `${percent}%`;
+    function updateProgress(pct, status) {
+      progressBar.style.width = `${pct}%`;
+      progressPercent.innerText = `${pct}%`;
       progressStatus.innerText = status;
     }
 
     async function extractAudioFromFile(file) {
-      try {
-        return await extractAudioWithMP4Box(file);
-      } catch (mp4Err) {
-        console.warn("MP4Box extraction failed, using AudioContext fallback:", mp4Err);
-        return await extractAudioViaAudioContext(file);
-      }
+      try { return await extractAudioWithMP4Box(file); }
+      catch { return await extractAudioViaAudioContext(file); }
     }
 
     function extractAudioWithMP4Box(file) {
@@ -834,18 +1002,11 @@
 
         mp4boxfile.onReady = (info) => {
           audioTrack = info.audioTracks && info.audioTracks[0];
-          if (!audioTrack) {
-            reject(new Error("Keine Tonspur im Video gefunden."));
-            return;
-          }
+          if (!audioTrack) { reject(new Error("Keine Tonspur.")); return; }
           mp4boxfile.setExtractionOptions(audioTrack.id, null, { nbSamples: 10000 });
           mp4boxfile.start();
         };
-
-        mp4boxfile.onSamples = (id, user, sampleList) => {
-          samples.push(...sampleList);
-        };
-
+        mp4boxfile.onSamples = (id, user, sampleList) => { samples.push(...sampleList); };
         mp4boxfile.onError = (e) => reject(e);
 
         reader.onload = (e) => {
@@ -854,23 +1015,13 @@
           try {
             mp4boxfile.appendBuffer(buffer);
             mp4boxfile.flush();
-
-            if (samples.length === 0) {
-              reject(new Error("Keine Audio-Samples gefunden."));
-              return;
-            }
-
+            if (samples.length === 0) { reject(new Error("Keine Samples.")); return; }
             const adtsBuffer = createAdtsContainer(samples, audioTrack);
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             const audioCtx = new AudioCtx();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-
             audioCtx.decodeAudioData(adtsBuffer, (decoded) => resolve(decoded), (err) => reject(err));
-          } catch (err) {
-            reject(err);
-          }
+          } catch (err) { reject(err); }
         };
-
         reader.readAsArrayBuffer(file);
       });
     }
@@ -880,13 +1031,10 @@
       const sampleRateIdx = sampleRates.indexOf(track.audio ? track.audio.sample_rate : 44100);
       const srIdx = sampleRateIdx !== -1 ? sampleRateIdx : 4;
       const channels = (track.audio && track.audio.channel_count) ? track.audio.channel_count : 2;
-
       let totalSize = 0;
       samples.forEach(s => totalSize += s.data.length + 7);
-
       const adtsBuf = new Uint8Array(totalSize);
       let offset = 0;
-
       samples.forEach(s => {
         const frameLen = s.data.length + 7;
         adtsBuf[offset] = 0xFF;
@@ -899,7 +1047,6 @@
         adtsBuf.set(s.data, offset + 7);
         offset += frameLen;
       });
-
       return adtsBuf.buffer;
     }
 
@@ -907,16 +1054,8 @@
       return new Promise((resolve, reject) => {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         const audioCtx = new AudioCtx();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
         const reader = new FileReader();
-
-        reader.onload = function (e) {
-          audioCtx.decodeAudioData(e.target.result, 
-            (buffer) => resolve(buffer),
-            (err) => reject(new Error("Fehler beim Dekodieren der Tonspur."))
-          );
-        };
-        reader.onerror = () => reject(new Error("Fehler beim Lesen der Datei."));
+        reader.onload = (e) => audioCtx.decodeAudioData(e.target.result, (b) => resolve(b), (err) => reject(err));
         reader.readAsArrayBuffer(file);
       });
     }
@@ -924,55 +1063,36 @@
     async function applyAudioStudioEffects(sourceBuffer) {
       const sampleRate = sourceBuffer.sampleRate;
       const numChannels = sourceBuffer.numberOfChannels;
-
       const trimStartSec = parseFloat(trimStartInput.value) || 0;
       let trimEndSec = parseFloat(trimEndInput.value) || 0;
-      if (trimEndSec <= 0 || trimEndSec > sourceBuffer.duration) {
-        trimEndSec = sourceBuffer.duration;
-      }
-      if (trimStartSec >= trimEndSec) {
-        throw new Error("Ungültige Trimming-Zeiten: Start muss vor Ende liegen.");
-      }
-
+      if (trimEndSec <= 0 || trimEndSec > sourceBuffer.duration) trimEndSec = sourceBuffer.duration;
       const startSample = Math.floor(trimStartSec * sampleRate);
       const endSample = Math.floor(trimEndSec * sampleRate);
       const trimmedSampleCount = endSample - startSample;
-
       const speed = parseFloat(speedSlider.value) || 1.0;
       const finalSampleCount = Math.floor(trimmedSampleCount / speed);
 
       const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
       const offlineCtx = new OfflineCtx(numChannels, finalSampleCount, sampleRate);
-
       const trimmedBuffer = offlineCtx.createBuffer(numChannels, trimmedSampleCount, sampleRate);
+
       for (let c = 0; c < numChannels; c++) {
         const srcData = sourceBuffer.getChannelData(c);
         const subData = trimmedBuffer.getChannelData(c);
-        for (let i = 0; i < trimmedSampleCount; i++) {
-          subData[i] = srcData[startSample + i];
-        }
+        for (let i = 0; i < trimmedSampleCount; i++) subData[i] = srcData[startSample + i];
       }
 
       const sourceNode = offlineCtx.createBufferSource();
       sourceNode.buffer = trimmedBuffer;
       sourceNode.playbackRate.value = speed;
-
       let lastNode = sourceNode;
 
       if (voiceBoostToggle.checked) {
         const highpass = offlineCtx.createBiquadFilter();
-        highpass.type = 'highpass';
-        highpass.frequency.value = 120;
-
+        highpass.type = 'highpass'; highpass.frequency.value = 120;
         const voicePeak = offlineCtx.createBiquadFilter();
-        voicePeak.type = 'peaking';
-        voicePeak.frequency.value = 2500;
-        voicePeak.Q.value = 1.2;
-        voicePeak.gain.value = 4.0;
-
-        lastNode.connect(highpass);
-        highpass.connect(voicePeak);
-        lastNode = voicePeak;
+        voicePeak.type = 'peaking'; voicePeak.frequency.value = 2500; voicePeak.Q.value = 1.2; voicePeak.gain.value = 4.0;
+        lastNode.connect(highpass); highpass.connect(voicePeak); lastNode = voicePeak;
       }
 
       const gainNode = offlineCtx.createGain();
@@ -982,12 +1102,8 @@
       const totalDurationSec = finalSampleCount / sampleRate;
 
       gainNode.gain.setValueAtTime(0, 0);
-
-      if (fadeInDuration > 0) {
-        gainNode.gain.linearRampToValueAtTime(userGain, Math.min(fadeInDuration, totalDurationSec));
-      } else {
-        gainNode.gain.setValueAtTime(userGain, 0);
-      }
+      if (fadeInDuration > 0) gainNode.gain.linearRampToValueAtTime(userGain, Math.min(fadeInDuration, totalDurationSec));
+      else gainNode.gain.setValueAtTime(userGain, 0);
 
       if (fadeOutDuration > 0 && totalDurationSec > fadeOutDuration) {
         gainNode.gain.setValueAtTime(userGain, totalDurationSec - fadeOutDuration);
@@ -996,9 +1112,7 @@
 
       lastNode.connect(gainNode);
       gainNode.connect(offlineCtx.destination);
-
       sourceNode.start(0);
-
       return await offlineCtx.startRendering();
     }
 
@@ -1007,164 +1121,66 @@
       const length = buffer.length * numOfChan * 2 + 44;
       const out = new DataView(new ArrayBuffer(length));
       let channels = [], sample, pos = 0;
-
       function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
       function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
-
-      setUint32(0x46464952); // "RIFF"
-      setUint32(length - 8);
-      setUint32(0x45564157); // "WAVE"
-      setUint32(0x20746d66); // "fmt "
-      setUint32(16);          
-      setUint16(1);           
-      setUint16(numOfChan);
-      setUint32(buffer.sampleRate);
-      setUint32(buffer.sampleRate * 2 * numOfChan);
-      setUint16(numOfChan * 2);
-      setUint16(16);          
-      setUint32(0x61746164); // "data"
-      setUint32(length - pos - 4);
-
-      for (let i = 0; i < buffer.numberOfChannels; i++) {
-        channels.push(buffer.getChannelData(i));
-      }
-
+      setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157); setUint32(0x20746d66);
+      setUint32(16); setUint16(1); setUint16(numOfChan); setUint32(buffer.sampleRate);
+      setUint32(buffer.sampleRate * 2 * numOfChan); setUint16(numOfChan * 2); setUint16(16);
+      setUint32(0x61746164); setUint32(length - pos - 4);
+      for (let i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
       for (let i = 0; i < buffer.length; i++) {
         for (let ch = 0; ch < numOfChan; ch++) {
           sample = Math.max(-1, Math.min(1, channels[ch][i]));
           sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
-          out.setInt16(pos, sample, true);
-          pos += 2;
+          out.setInt16(pos, sample, true); pos += 2;
         }
       }
-
       return new Blob([out.buffer], { type: 'audio/wav' });
     }
 
-    function audioBufferToMp3Blob(buffer, bitrate = 128, isMono = false, onProgress = null) {
-      return new Promise((resolve, reject) => {
-        try {
-          setTimeout(() => {
-            const numChannels = isMono ? 1 : Math.min(buffer.numberOfChannels, 2);
-            const sampleRate = buffer.sampleRate;
-            const mp3encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, bitrate);
-            const mp3Data = [];
+    function audioBufferToMp3Blob(buffer, bitrate = 128, isMono = false) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const numChannels = isMono ? 1 : Math.min(buffer.numberOfChannels, 2);
+          const sampleRate = buffer.sampleRate;
+          const mp3encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, bitrate);
+          const mp3Data = [];
+          const left = buffer.getChannelData(0);
+          const right = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : left;
 
-            let leftData, rightData;
+          const leftData = new Int16Array(buffer.length);
+          const rightData = new Int16Array(buffer.length);
+          for (let i = 0; i < buffer.length; i++) {
+            let sl = Math.max(-1, Math.min(1, left[i]));
+            let sr = Math.max(-1, Math.min(1, right[i]));
+            leftData[i] = sl < 0 ? sl * 0x8000 : sl * 0x7FFF;
+            rightData[i] = sr < 0 ? sr * 0x8000 : sr * 0x7FFF;
+          }
 
-            if (isMono) {
-              const left = buffer.getChannelData(0);
-              leftData = new Int16Array(buffer.length);
-              if (buffer.numberOfChannels > 1) {
-                const right = buffer.getChannelData(1);
-                for (let i = 0; i < buffer.length; i++) {
-                  let avg = (left[i] + right[i]) / 2;
-                  let s = Math.max(-1, Math.min(1, avg));
-                  leftData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                }
-              } else {
-                for (let i = 0; i < buffer.length; i++) {
-                  let s = Math.max(-1, Math.min(1, left[i]));
-                  leftData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                }
-              }
-            } else {
-              const left = buffer.getChannelData(0);
-              const right = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : left;
-
-              leftData = new Int16Array(buffer.length);
-              rightData = new Int16Array(buffer.length);
-
-              for (let i = 0; i < buffer.length; i++) {
-                let sl = Math.max(-1, Math.min(1, left[i]));
-                let sr = Math.max(-1, Math.min(1, right[i]));
-                leftData[i] = sl < 0 ? sl * 0x8000 : sl * 0x7FFF;
-                rightData[i] = sr < 0 ? sr * 0x8000 : sr * 0x7FFF;
-              }
-            }
-
-            const sampleBlockSize = 1152;
-            const totalSamples = leftData.length;
-
-            for (let i = 0; i < totalSamples; i += sampleBlockSize) {
-              const leftChunk = leftData.subarray(i, i + sampleBlockSize);
-              let mp3buf;
-
-              if (isMono) {
-                mp3buf = mp3encoder.encodeBuffer(leftChunk);
-              } else {
-                const rightChunk = rightData.subarray(i, i + sampleBlockSize);
-                mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
-              }
-
-              if (mp3buf.length > 0) mp3Data.push(mp3buf);
-              if (onProgress && i % (sampleBlockSize * 25) === 0) {
-                onProgress((i / totalSamples) * 100);
-              }
-            }
-
-            const mp3buf = mp3encoder.flush();
+          const sampleBlockSize = 1152;
+          for (let i = 0; i < leftData.length; i += sampleBlockSize) {
+            const lChunk = leftData.subarray(i, i + sampleBlockSize);
+            const rChunk = rightData.subarray(i, i + sampleBlockSize);
+            const mp3buf = isMono ? mp3encoder.encodeBuffer(lChunk) : mp3encoder.encodeBuffer(lChunk, rChunk);
             if (mp3buf.length > 0) mp3Data.push(mp3buf);
-
-            // Using standard audio/mpeg MIME type for universal iOS compatibility
-            resolve(new Blob(mp3Data, { type: 'audio/mpeg' }));
-          }, 10);
-        } catch (err) {
-          reject(err);
-        }
+          }
+          const mp3buf = mp3encoder.flush();
+          if (mp3buf.length > 0) mp3Data.push(mp3buf);
+          resolve(new Blob(mp3Data, { type: 'audio/mpeg' }));
+        }, 10);
       });
-    }
-
-    function attachID3Metadata(mp3Blob) {
-      const title = tagTitle.value.trim();
-      const artist = tagArtist.value.trim();
-      const album = tagAlbum.value.trim();
-
-      if (!title && !artist && !album) return mp3Blob;
-
-      const createFrame = (id, text) => {
-        if (!text) return [];
-        const encoded = new TextEncoder().encode(text);
-        const size = encoded.length + 1;
-        const frameHeader = [
-          id.charCodeAt(0), id.charCodeAt(1), id.charCodeAt(2), id.charCodeAt(3),
-          (size >> 24) & 0xFF, (size >> 16) & 0xFF, (size >> 8) & 0xFF, size & 0xFF,
-          0, 0
-        ];
-        return [...frameHeader, 0, ...Array.from(encoded)];
-      };
-
-      const titleFrame = createFrame('TIT2', title);
-      const artistFrame = createFrame('TPE1', artist);
-      const albumFrame = createFrame('TALB', album);
-
-      const frames = [...titleFrame, ...artistFrame, ...albumFrame];
-      const tagSize = frames.length;
-
-      const header = [
-        0x49, 0x44, 0x33,
-        0x03, 0x00,
-        0x00,
-        (tagSize >> 21) & 0x7F, (tagSize >> 14) & 0x7F, (tagSize >> 7) & 0x7F, tagSize & 0x7F
-      ];
-
-      const tagArray = new Uint8Array([...header, ...frames]);
-      return new Blob([tagArray, mp3Blob], { type: 'audio/mpeg' });
     }
 
     function setupAudioPlayerAndWaveform(blob, audioBuffer) {
       const audioUrl = URL.createObjectURL(blob);
       resultAudioPlayer.src = audioUrl;
-
       playIcon.classList.remove('hidden');
       pauseIcon.classList.add('hidden');
-
       drawCanvasWaveform(audioBuffer);
 
       const formatTime = (sec) => {
         if (isNaN(sec)) return "00:00";
-        const m = Math.floor(sec / 60);
-        const s = Math.floor(sec % 60);
+        const m = Math.floor(sec / 60); const s = Math.floor(sec % 60);
         return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
       };
 
@@ -1172,126 +1188,342 @@
         playerTime.innerText = `${formatTime(resultAudioPlayer.currentTime)} / ${formatTime(resultAudioPlayer.duration)}`;
         drawCanvasWaveform(audioBuffer, resultAudioPlayer.currentTime / resultAudioPlayer.duration);
       };
-
       resultAudioPlayer.onended = () => {
-        playIcon.classList.remove('hidden');
-        pauseIcon.classList.add('hidden');
-        drawCanvasWaveform(audioBuffer, 0);
+        playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden');
       };
-
       playerPlayBtn.onclick = () => {
-        if (resultAudioPlayer.paused) {
-          resultAudioPlayer.play();
-          playIcon.classList.add('hidden');
-          pauseIcon.classList.remove('hidden');
-        } else {
-          resultAudioPlayer.pause();
-          playIcon.classList.remove('hidden');
-          pauseIcon.classList.add('hidden');
-        }
-      };
-
-      waveformCanvas.onclick = (e) => {
-        const rect = waveformCanvas.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const pct = clickX / rect.width;
-        if (resultAudioPlayer.duration) {
-          resultAudioPlayer.currentTime = pct * resultAudioPlayer.duration;
-        }
+        if (resultAudioPlayer.paused) { resultAudioPlayer.play(); playIcon.classList.add('hidden'); pauseIcon.classList.remove('hidden'); }
+        else { resultAudioPlayer.pause(); playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden'); }
       };
     }
 
     function drawCanvasWaveform(audioBuffer, progressPct = 0) {
       const canvas = waveformCanvas;
       const ctx = canvas.getContext('2d');
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio || 600;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio || 120;
-
-      const width = canvas.width;
-      const height = canvas.height;
+      canvas.width = canvas.offsetWidth * window.devicePixelRatio || 500;
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio || 100;
+      const width = canvas.width; const height = canvas.height;
       const channelData = audioBuffer.getChannelData(0);
       const step = Math.ceil(channelData.length / width);
       const amp = height / 2;
 
       ctx.clearRect(0, 0, width, height);
-
       const gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, '#0a84ff');
-      gradient.addColorStop(0.5, '#5e5ce6');
-      gradient.addColorStop(1, '#bf5af2');
-
-      ctx.fillStyle = '#1c1c1e';
-      ctx.fillRect(0, 0, width, height);
+      gradient.addColorStop(0, '#0a84ff'); gradient.addColorStop(1, '#bf5af2');
+      ctx.fillStyle = '#1c1c1e'; ctx.fillRect(0, 0, width, height);
 
       for (let i = 0; i < width; i++) {
-        let min = 1.0;
-        let max = -1.0;
+        let min = 1.0; let max = -1.0;
         for (let j = 0; j < step; j++) {
           const datum = channelData[i * step + j];
-          if (datum < min) min = datum;
-          if (datum > max) max = datum;
+          if (datum < min) min = datum; if (datum > max) max = datum;
         }
-
-        const barHeight = Math.max(4, (max - min) * amp * 0.85);
+        const barHeight = Math.max(3, (max - min) * amp * 0.85);
         const y = (height - barHeight) / 2;
-
-        if (i / width <= progressPct) {
-          ctx.fillStyle = gradient;
-        } else {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        }
-
-        ctx.beginPath();
-        if (ctx.roundRect) {
-          ctx.roundRect(i * 3, y, 2, barHeight, 2);
-        } else {
-          ctx.rect(i * 3, y, 2, barHeight);
-        }
-        ctx.fill();
+        ctx.fillStyle = i / width <= progressPct ? gradient : 'rgba(255,255,255,0.2)';
+        ctx.fillRect(i * 3, y, 2, barHeight);
       }
     }
 
     downloadBtn.addEventListener('click', () => {
       if (!generatedBlob) return;
-      const finalName = resultFilenameEdit.value.trim() || generatedFileName || 'audio.mp3';
-      const url = URL.createObjectURL(generatedBlob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = finalName;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
+      a.href = URL.createObjectURL(generatedBlob);
+      a.download = resultFilenameEdit.value.trim() || generatedFileName || 'audio.mp3';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
 
-    batchZipBtn.addEventListener('click', () => {
+    batchZipBtn.addEventListener('click', () => { downloadBtn.click(); });
+
+    // Send converted audio directly into iMusic Library
+    sendToImusicBtn.addEventListener('click', () => {
       if (!generatedBlob) return;
-      downloadBtn.click();
+      const title = resultFilenameEdit.value.trim().replace(/\.[^/.]+$/, "") || "Neuer Track";
+      const newSong = {
+        id: 'song-' + Date.now(),
+        title: title,
+        artist: 'AudioForge Studio',
+        album: 'Konvertierungen',
+        duration: Math.round(resultAudioPlayer.duration || 180),
+        isFavorite: false,
+        url: URL.createObjectURL(generatedBlob),
+        cover: ''
+      };
+      imusicSongs.unshift(newSong);
+      saveImusicData();
+      showToast("Erfolgreich zu iMusic hinzugefügt!", "fa-solid fa-circle-check text-pink-500");
+      switchApp('imusic');
     });
 
-    shareBtn.addEventListener('click', async () => {
-      if (!generatedBlob) return;
-      const finalName = resultFilenameEdit.value.trim() || generatedFileName || 'audio.mp3';
-      const file = new File([generatedBlob], finalName, { type: generatedBlob.type || 'audio/mpeg' });
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: 'AudioForge extrahierte Audio-Datei',
-            text: 'Hier ist deine Audiodatei von AudioForge iOS Studio.'
-          });
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            showToast('Teilen fehlgeschlagen: Nutze den Download Button');
-          }
-        }
-      } else {
-        showToast('Nutze den Download-Button oben zum Speichern');
+    /* ========================================================
+       APP 2: IMUSIC LIBRARY & PLAYER ENGINE
+       ======================================================== */
+    let imusicSongs = [
+      {
+        id: 'demo-1',
+        title: 'Acoustic Breeze',
+        artist: 'Benjamin Tissot',
+        album: 'Royalty Free Demo',
+        duration: 157,
+        isFavorite: true,
+        url: 'https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3',
+        cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'demo-2',
+        title: 'Ukulele Joy',
+        artist: 'Bensound',
+        album: 'Summer Vibes',
+        duration: 146,
+        isFavorite: false,
+        url: 'https://www.bensound.com/bensound-music/bensound-ukulele.mp3',
+        cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&auto=format&fit=crop&q=80'
       }
+    ];
+    let imusicPlaylists = [];
+    let imusicCategory = 'all';
+    let imusicCurrentIndex = -1;
+    let imusicIsPlaying = false;
+    let imusicIsShuffle = false;
+    let imusicRepeatMode = 0;
+    let imusicSearchQuery = '';
+
+    const imusicAudio = new Audio();
+    imusicAudio.crossOrigin = "anonymous";
+
+    const imusicFileInput = document.getElementById('imusic-audio-file-input');
+    const imusicSongsContainer = document.getElementById('imusic-songs-container');
+    const imusicEmptyState = document.getElementById('imusic-empty-state');
+    const imusicPlaylistsView = document.getElementById('imusic-playlists-view');
+    const imusicPlaylistsGrid = document.getElementById('imusic-playlists-grid');
+    const imusicArtistsView = document.getElementById('imusic-artists-view');
+    const imusicSearchInput = document.getElementById('imusic-search-input');
+
+    imusicFileInput.addEventListener('change', (e) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      for (let f of files) {
+        const url = URL.createObjectURL(f);
+        const name = f.name.replace(/\.[^/.]+$/, "");
+        const newSong = {
+          id: 'song-' + Math.random().toString(36).substr(2, 9),
+          title: name,
+          artist: 'Lokaler Import',
+          album: 'Uploads',
+          duration: 180,
+          isFavorite: false,
+          url: url,
+          cover: ''
+        };
+        imusicSongs.push(newSong);
+      }
+      saveImusicData();
+      renderImusicSongs();
+      showToast(`${files.length} Titel zu iMusic importiert!`, "fa-solid fa-circle-check text-pink-500");
     });
+
+    imusicSearchInput.addEventListener('input', (e) => {
+      imusicSearchQuery = e.target.value.toLowerCase();
+      renderImusicSongs();
+    });
+
+    function saveImusicData() {
+      try { localStorage.setItem('imusic_songs_v1', JSON.stringify(imusicSongs)); } catch (e) {}
+    }
+
+    function loadImusicData() {
+      try {
+        const saved = localStorage.getItem('imusic_songs_v1');
+        if (saved) imusicSongs = JSON.parse(saved);
+      } catch (e) {}
+    }
+    loadImusicData();
+
+    function filterImusicCategory(cat) {
+      imusicCategory = cat;
+      document.querySelectorAll('.imusic-chip').forEach(btn => {
+        btn.className = "imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap";
+      });
+      document.getElementById(`tab-imusic-${cat}`).className = "imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-pink-600 text-white shadow-md transition whitespace-nowrap";
+      
+      imusicSongsContainer.classList.add('hidden');
+      imusicPlaylistsView.classList.add('hidden');
+      imusicArtistsView.classList.add('hidden');
+
+      if (cat === 'playlists') {
+        imusicPlaylistsView.classList.remove('hidden');
+        renderPlaylists();
+      } else if (cat === 'artists') {
+        imusicArtistsView.classList.remove('hidden');
+        renderArtists();
+      } else {
+        imusicSongsContainer.classList.remove('hidden');
+        renderImusicSongs();
+      }
+    }
+
+    function renderImusicSongs() {
+      let list = imusicSongs;
+      if (imusicCategory === 'favorites') list = list.filter(s => s.isFavorite);
+      if (imusicSearchQuery) {
+        list = list.filter(s => s.title.toLowerCase().includes(imusicSearchQuery) || s.artist.toLowerCase().includes(imusicSearchQuery));
+      }
+
+      imusicSongsContainer.innerHTML = '';
+      if (list.length === 0) {
+        imusicEmptyState.classList.remove('hidden');
+        return;
+      }
+      imusicEmptyState.classList.add('hidden');
+
+      list.forEach((song, idx) => {
+        const actualIdx = imusicSongs.indexOf(song);
+        const isActive = actualIdx === imusicCurrentIndex;
+        const item = document.createElement('div');
+        item.className = `flex items-center justify-between p-2.5 rounded-2xl glass-card transition cursor-pointer ${isActive ? 'border-pink-500/50 bg-pink-500/10' : 'hover:bg-white/10'}`;
+        item.innerHTML = `
+          <div class="flex items-center space-x-3 overflow-hidden flex-1" onclick="playImusicSong(${actualIdx})">
+            <div class="w-10 h-10 rounded-xl bg-slate-800 bg-cover bg-center flex items-center justify-center shrink-0 border border-white/10 shadow">
+              ${song.cover ? `<img src="${song.cover}" class="w-full h-full object-cover rounded-xl">` : '<i class="fa-solid fa-music text-slate-500 text-xs"></i>'}
+            </div>
+            <div class="overflow-hidden flex-1">
+              <h4 class="text-xs font-bold ${isActive ? 'text-pink-400' : 'text-white'} truncate">${song.title}</h4>
+              <p class="text-[10px] text-slate-400 truncate mt-0.5">${song.artist}</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 shrink-0 pl-2">
+            <button onclick="toggleImusicFavorite('${song.id}')" class="p-2 text-xs ${song.isFavorite ? 'text-pink-500' : 'text-slate-500 hover:text-white'}"><i class="fa-${song.isFavorite ? 'solid' : 'regular'} fa-heart"></i></button>
+          </div>
+        `;
+        imusicSongsContainer.appendChild(item);
+      });
+    }
+
+    function playImusicSong(index) {
+      if (index < 0 || index >= imusicSongs.length) return;
+      imusicCurrentIndex = index;
+      const song = imusicSongs[index];
+      imusicAudio.src = song.url;
+      imusicAudio.play().then(() => {
+        imusicIsPlaying = true;
+        updateImusicPlayerUI();
+      }).catch(err => console.error("Playback error:", err));
+    }
+
+    function togglePlayPause() {
+      if (imusicCurrentIndex === -1 && imusicSongs.length > 0) {
+        playImusicSong(0);
+        return;
+      }
+      if (imusicAudio.paused) {
+        imusicAudio.play();
+        imusicIsPlaying = true;
+      } else {
+        imusicAudio.pause();
+        imusicIsPlaying = false;
+      }
+      updateImusicPlayerUI();
+    }
+
+    function playNextSong() {
+      if (imusicSongs.length === 0) return;
+      let next = imusicCurrentIndex + 1;
+      if (next >= imusicSongs.length) next = 0;
+      playImusicSong(next);
+    }
+
+    function playPrevSong() {
+      if (imusicSongs.length === 0) return;
+      let prev = imusicCurrentIndex - 1;
+      if (prev < 0) prev = imusicSongs.length - 1;
+      playImusicSong(prev);
+    }
+
+    function toggleImusicFavorite(id) {
+      const s = imusicSongs.find(x => x.id === id);
+      if (s) {
+        s.isFavorite = !s.isFavorite;
+        saveImusicData();
+        renderImusicSongs();
+      }
+    }
+
+    function updateImusicPlayerUI() {
+      const song = imusicSongs[imusicCurrentIndex];
+      if (!song) return;
+
+      document.getElementById('imusic-mini-title').innerText = song.title;
+      document.getElementById('imusic-mini-artist').innerText = song.artist;
+      document.getElementById('full-title').innerText = song.title;
+      document.getElementById('full-artist').innerText = song.artist;
+      
+      const playIconHTML = imusicIsPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+      document.getElementById('imusic-mini-play-btn').innerHTML = imusicIsPlaying ? '<i class="fa-solid fa-pause text-sm"></i>' : '<i class="fa-solid fa-play text-sm"></i>';
+      document.getElementById('full-play-btn').innerHTML = playIconHTML;
+
+      const favBtn = document.getElementById('full-fav-btn');
+      favBtn.innerHTML = `<i class="fa-${song.isFavorite ? 'solid' : 'regular'} fa-heart"></i>`;
+      favBtn.className = `p-2 text-lg transition ${song.isFavorite ? 'text-pink-500' : 'text-slate-500 hover:text-pink-500'}`;
+    }
+
+    imusicAudio.ontimeupdate = () => {
+      if (!imusicAudio.duration) return;
+      const pct = (imusicAudio.currentTime / imusicAudio.duration) * 100;
+      document.getElementById('imusic-mini-progress-fill').style.width = `${pct}%`;
+      document.getElementById('seek-bar').value = pct;
+      
+      const formatTime = (sec) => {
+        const m = Math.floor(sec / 60); const s = Math.floor(sec % 60);
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+      };
+      document.getElementById('current-time').innerText = formatTime(imusicAudio.currentTime);
+      document.getElementById('total-duration').innerText = formatTime(imusicAudio.duration);
+    };
+
+    imusicAudio.onended = () => { playNextSong(); };
+
+    function openFullPlayer() {
+      document.getElementById('full-player-modal').classList.remove('translate-y-full');
+    }
+
+    function closeFullPlayer() {
+      document.getElementById('full-player-modal').classList.add('translate-y-full');
+    }
+
+    function toggleEqModal() {
+      const modal = document.getElementById('eq-modal');
+      modal.classList.toggle('hidden');
+    }
+
+    function setEqPreset(preset) {
+      document.querySelectorAll('.eq-preset-btn').forEach(b => {
+        b.className = "eq-preset-btn w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-semibold text-slate-300 text-left flex justify-between items-center";
+      });
+      showToast(`EQ Preset geladen: ${preset}`, "fa-solid fa-sliders text-pink-500");
+    }
+
+    function toggleShuffle() {
+      imusicIsShuffle = !imusicIsShuffle;
+      document.getElementById('shuffle-btn').className = `p-2 text-sm transition ${imusicIsShuffle ? 'text-pink-500' : 'text-slate-400 hover:text-white'}`;
+      showToast(imusicIsShuffle ? "Shuffle aktiviert" : "Shuffle deaktiviert", "fa-solid fa-shuffle text-pink-500");
+    }
+
+    function toggleRepeat() {
+      imusicRepeatMode = (imusicRepeatMode + 1) % 3;
+      const btn = document.getElementById('repeat-btn');
+      if (imusicRepeatMode === 0) { btn.className = "p-2 text-sm text-slate-400 hover:text-white transition"; showToast("Wiederholung aus"); }
+      else if (imusicRepeatMode === 1) { btn.className = "p-2 text-sm text-pink-500 transition"; showToast("Alle wiederholen"); }
+      else { btn.className = "p-2 text-sm text-purple-400 transition"; showToast("Song wiederholen"); }
+    }
+
+    function toggleVisualizerMode() {
+      showToast("Visualizer Modus aktiv", "fa-solid fa-chart-simple text-pink-500");
+    }
+
+    function renderPlaylists() { imusicPlaylistsGrid.innerHTML = '<p class="text-xs text-slate-400 col-span-2">Keine Playlists vorhanden.</p>'; }
+    function renderArtists() { imusicArtistsView.innerHTML = '<p class="text-xs text-slate-400">Keine Künstler-Gruppierung.</p>'; }
+    function showCreatePlaylistDialog() { showToast("Playlist-Erstellung geöffnet", "fa-solid fa-plus text-pink-500"); }
   </script>
 </body>
 </html>
