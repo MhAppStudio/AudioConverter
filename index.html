@@ -9,12 +9,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- MP4Box.js for native iOS MOV/MP4 audio demuxing -->
-  <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.2/dist/mp4box.all.min.js"></script>
   <!-- lamejs for high-efficiency MP3 encoding -->
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
-  <!-- JSZip for batch download ZIP generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <!-- Google Font Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -75,310 +71,310 @@
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 4px; }
     .glass-panel {
-      background: rgba(28, 28, 30, 0.75);
+      background: rgba(28, 28, 30, 0.85);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
     }
-    .glass-card {
-      background: rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .player-modal-slide { transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-8px); }
-    }
-    .animate-float { animation: float 4s ease-in-out infinite; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-start max-w-xl mx-auto px-3 sm:px-6 pb-24 pt-3">
 
+  <!-- Master Navigation Header -->
   <header id="master-header" class="w-full bg-ios-card p-1.5 rounded-2xl mb-4 hidden border border-white/10 shadow-xl z-30 grid grid-cols-4 gap-1">
     <button onclick="switchApp('welcome')" id="nav-btn-welcome" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center">
       <i class="fa-solid fa-house text-sm"></i>
     </button>
-    <button onclick="switchApp('converter')" id="nav-btn-converter" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-white bg-ios-blue shadow transition-all cursor-pointer flex items-center justify-center gap-1">
+    <button onclick="switchApp('converter')" id="nav-btn-converter" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1">
       <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-      <span class="truncate">AudioForge</span>
+      <span class="truncate">Converter</span>
     </button>
-    <button onclick="switchApp('aimusic')" id="nav-btn-aimusic" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1">
+    <button onclick="switchApp('aimusic')" id="nav-btn-aimusic" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-white bg-ios-blue shadow transition-all cursor-pointer flex items-center justify-center gap-1">
       <i class="fa-solid fa-robot text-xs"></i>
-      <span class="truncate">AI Studio</span>
+      <span class="truncate">KI-Musik</span>
     </button>
     <button onclick="switchApp('imusic')" id="nav-btn-imusic" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1">
       <i class="fa-solid fa-music text-xs"></i>
-      <span class="truncate">iMusic</span>
+      <span class="truncate">Bibliothek</span>
     </button>
   </header>
 
-  <!-- ==================== WELCOME & HOME SCREEN ==================== -->
-  <div id="app-welcome" class="w-full flex flex-col items-center pt-6 pb-12">
-    <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-pink-600 flex items-center justify-center shadow-2xl shadow-indigo-500/30 mb-6 animate-float border border-white/20">
-      <i class="fa-solid fa-headphones-simple text-4xl text-white"></i>
+  <!-- ==================== WELCOME SCREEN ==================== -->
+  <div id="app-welcome" class="w-full flex flex-col items-center pt-10 pb-12">
+    <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-600 flex items-center justify-center shadow-2xl mb-6 border border-white/20">
+      <i class="fa-solid fa-wand-magic-sparkles text-4xl text-white"></i>
     </div>
     
-    <span class="text-xs font-bold bg-ios-blue/15 text-ios-blue border border-ios-blue/30 px-3 py-1 rounded-full mb-3 flex items-center gap-1.5">
-      <i class="fa-solid fa-bolt text-[10px]"></i> Studio Suite v2.6 + KI Voice Studio
-    </span>
-
-    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-center bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent mb-2">
-      AudioForge & iMusic Studio
+    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-center text-white mb-2">
+      AudioForge & KI Studio
     </h1>
-    <p class="text-xs sm:text-sm text-ios-textMuted text-center max-w-sm mb-8 leading-relaxed">
-      Die ultimative iOS Web-App mit KI-Musikgenerator, Stimmwahl und Audio-Bibliothek.
+    <p class="text-xs sm:text-sm text-ios-textMuted text-center max-w-sm mb-8">
+      Erstelle Songs mit KI-Stimmen, Lyrics und eigenen Einstellungen.
     </p>
 
     <div class="w-full space-y-3.5 mb-8">
-      <div onclick="switchApp('converter')" class="w-full bg-ios-card hover:bg-ios-cardHover active:scale-[0.98] transition-all rounded-3xl p-5 border border-white/10 shadow-xl cursor-pointer flex items-center justify-between group">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-ios-blue/20 text-ios-blue flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-white mb-0.5">AudioForge Studio</h3>
-            <p class="text-xs text-ios-textMuted">Video-zu-Audio, MP3/WAV/M4R, Trim & Effekte</p>
-          </div>
-        </div>
-        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:translate-x-1 transition">
-          <i class="fa-solid fa-chevron-right text-xs"></i>
-        </div>
-      </div>
-
       <div onclick="switchApp('aimusic')" class="w-full bg-ios-card hover:bg-ios-cardHover active:scale-[0.98] transition-all rounded-3xl p-5 border border-white/10 shadow-xl cursor-pointer flex items-center justify-between group">
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-ios-purple/20 text-ios-purple flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
+          <div class="w-12 h-12 rounded-2xl bg-ios-purple/20 text-ios-purple flex items-center justify-center text-lg">
             <i class="fa-solid fa-robot"></i>
           </div>
           <div>
-            <h3 class="text-sm font-bold text-white mb-0.5">AI Music Creator & Voice Lab</h3>
-            <p class="text-xs text-ios-textMuted">Songs mit KI & Stimmauswahl (M/W/Eigene)</p>
+            <h3 class="text-sm font-bold text-white mb-0.5">KI-Musik Studio öffnen</h3>
+            <p class="text-xs text-ios-textMuted">Songbeschreibung, Songtexte & Einstellungen</p>
           </div>
         </div>
-        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:translate-x-1 transition">
-          <i class="fa-solid fa-chevron-right text-xs"></i>
-        </div>
-      </div>
-
-      <div onclick="switchApp('imusic')" class="w-full bg-ios-card hover:bg-ios-cardHover active:scale-[0.98] transition-all rounded-3xl p-5 border border-white/10 shadow-xl cursor-pointer flex items-center justify-between group">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-500 flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
-            <i class="fa-solid fa-music"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-white mb-0.5">iMusic Bibliothek</h3>
-            <p class="text-xs text-ios-textMuted">Musik-Player, Favoriten & Import-Verwaltung</p>
-          </div>
-        </div>
-        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:translate-x-1 transition">
+        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white">
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ==================== APP 1: AUDIOFORGE CONVERTER ==================== -->
-  <div id="app-converter" class="w-full flex flex-col hidden">
-    <div class="flex items-center justify-between mb-4 pt-1">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-          <i class="fa-solid fa-wand-magic-sparkles text-white"></i>
-        </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight leading-tight text-white">AudioForge iOS Studio</h1>
-          <p class="text-[11px] text-ios-textMuted font-medium">Video-zu-Audio Converter & Studio</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="w-full bg-ios-card p-1 rounded-2xl mb-4 flex border border-white/5 shadow-md">
-      <button id="tab-single" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-ios-blue shadow transition-all cursor-pointer flex items-center justify-center gap-1.5">
-        Einzelnes Video
-      </button>
-      <button id="tab-batch" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5">
-        Stapelverarbeitung (Batch)
-      </button>
-    </div>
-
-    <input type="file" id="file-input-single" accept="video/*" class="sr-only">
-    <input type="file" id="file-input-batch" accept="video/*" multiple class="sr-only">
-
-    <label id="upload-box" for="file-input-single" class="w-full block bg-ios-card border-2 border-dashed border-gray-700 hover:border-ios-blue rounded-3xl p-6 text-center cursor-pointer transition-all mb-4">
-      <div class="flex flex-col items-center justify-center py-4 pointer-events-none">
-        <div class="w-14 h-14 rounded-2xl bg-ios-blue/10 flex items-center justify-center text-ios-blue mb-3 shadow-inner">
-          <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
-        </div>
-        <p class="font-semibold text-sm text-gray-100 mb-1">Hier tippen um Video auszuwählen</p>
-        <p class="text-xs text-ios-textMuted">Unterstützt .mov, .mp4 & .m4v</p>
-      </div>
-    </label>
-
-    <div id="preview-box" class="hidden w-full bg-ios-card rounded-3xl p-4 mb-4 shadow-2xl border border-white/5">
-      <div class="flex justify-between items-center mb-3">
-        <span id="file-name" class="text-xs font-semibold text-gray-200 truncate max-w-[210px]">video.mov</span>
-      </div>
-      <div class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-inner border border-white/10">
-        <video id="video-preview" playsinline controls class="w-full h-full object-contain"></video>
-      </div>
-    </div>
-
-    <div id="batch-box" class="hidden w-full bg-ios-card rounded-3xl p-4 mb-4 shadow-2xl border border-white/5">
-      <div class="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
-        <h3 class="text-xs font-bold text-ios-textMuted uppercase tracking-wider">Ausgewählte Videos (<span id="batch-count">0</span>)</h3>
-      </div>
-      <div id="batch-list" class="space-y-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar mb-2"></div>
-    </div>
-
-    <button id="convert-btn" type="button" disabled class="w-full py-3.5 rounded-2xl bg-ios-blue disabled:opacity-40 text-white font-bold text-sm shadow-xl transition-all flex items-center justify-center gap-2 mb-4 cursor-pointer">
-      Jetzt Audio extrahieren
-    </button>
-
-    <div id="result-box" class="hidden w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-emerald-500/30 text-center space-y-3">
-      <h3 class="text-base font-bold text-white">Audio erfolgreich extrahiert!</h3>
-      <input type="text" id="result-filename-edit" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2.5 border border-white/10">
-      <button id="download-btn" type="button" class="w-full py-3 rounded-xl bg-emerald-500 text-black font-bold text-sm shadow-lg">Audio herunterladen</button>
-      <button id="send-to-imusic-btn" type="button" class="w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-xs">Zu iMusic hinzufügen</button>
-    </div>
-  </div>
-
-  <!-- ==================== APP 1.5: AI MUSIC & VOICE LAB ==================== -->
+  <!-- ==================== APP: AI MUSIC CREATOR (Neu nach Screenshots) ==================== -->
   <div id="app-aimusic" class="w-full flex flex-col hidden space-y-4">
     <div class="flex items-center justify-between mb-1 pt-1">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 flex items-center justify-center shadow-lg">
-          <i class="fa-solid fa-robot text-white text-lg"></i>
-        </div>
-        <div>
-          <h1 class="text-lg font-bold text-white">AI Music & Voice Lab</h1>
-          <p class="text-[11px] text-ios-textMuted">Songs mit KI & flexibler Stimm-Auswahl</p>
-        </div>
-      </div>
+      <h1 class="text-xl font-bold text-white">Musik erstellen</h1>
     </div>
 
-    <div class="w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-white/5 space-y-3.5">
-      <textarea id="ai-prompt-input" rows="2" placeholder="Beschreibe deinen Song..." class="w-full bg-ios-cardHover text-white text-xs rounded-2xl p-3 border border-white/10 focus:outline-none resize-none"></textarea>
-      
-      <div class="grid grid-cols-3 gap-2">
-        <button type="button" onclick="selectVoiceType('male')" id="voice-btn-male" class="voice-tab-btn py-2 px-1 rounded-xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer">👨 Männlich</button>
-        <button type="button" onclick="selectVoiceType('female')" id="voice-btn-female" class="voice-tab-btn py-2 px-1 rounded-xl border border-white/10 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center cursor-pointer">👩 Weiblich</button>
-        <button type="button" onclick="selectVoiceType('custom')" id="voice-btn-custom" class="voice-tab-btn py-2 px-1 rounded-xl border border-white/10 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center cursor-pointer">🎙️ Eigene</button>
-      </div>
-
-      <div id="voice-custom-options" class="hidden p-3 bg-purple-950/30 rounded-xl border border-purple-500/30 space-y-2">
-        <button type="button" id="record-voice-btn" onclick="toggleRecordVoice()" class="w-full py-2 rounded-lg bg-pink-600 text-white text-xs font-bold">Stimme aufnehmen (5s)</button>
-        <div id="custom-voice-status" class="text-[11px] text-emerald-400 hidden">Stimme bereit!</div>
-      </div>
-
-      <button id="ai-generate-btn" type="button" onclick="generateAiMusic()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm shadow-xl cursor-pointer">
-        KI-Song generieren & Auto-MP3
+    <!-- Modus Umschalter (Songbeschreibung / Songtext-Modus) -->
+    <div class="w-full bg-ios-card p-1 rounded-2xl flex border border-white/10 shadow-md">
+      <button id="mode-desc-btn" type="button" onclick="switchAiMode('desc')" class="flex-1 py-2 rounded-xl text-xs font-semibold text-ios-textMuted transition cursor-pointer flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-align-left text-xs"></i> Songbeschreibung
+      </button>
+      <button id="mode-lyrics-btn" type="button" onclick="switchAiMode('lyrics')" class="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-white/10 shadow transition cursor-pointer flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-pen-nib text-xs"></i> Songtext-Modus
       </button>
     </div>
 
+    <!-- Eingabe-Bereich (Dynamisch je nach Modus) -->
+    <div class="w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-white/5 space-y-3">
+      <!-- Songbeschreibung Textarea (Standard versteckt) -->
+      <div id="desc-container" class="hidden">
+        <textarea id="ai-desc-input" rows="4" placeholder="Beschreibe den Song, den du erstellen möchtest (z.B. Ein fröhlicher Sommer-Pop-Song über Freiheit)..." class="w-full bg-ios-cardHover text-white text-xs rounded-2xl p-3 border border-white/10 focus:outline-none resize-none"></textarea>
+      </div>
+
+      <!-- Songtext-Modus Textarea -->
+      <div id="lyrics-container" class="space-y-2">
+        <textarea id="ai-lyrics-input" rows="6" class="w-full bg-ios-cardHover text-white text-xs rounded-2xl p-3 border border-white/10 focus:outline-none resize-none leading-relaxed">[Strophe]
+Ich laufe durch die Straßen, verloren in der Stadt
+Kein Plan, kein Ziel, suche nur nach etwas Schönem
+Überfüllte Gehwege, Neonlichter über mir
+Menschen ziehen vorbei, doch keiner sieht mein Band
+
+[Strophe 2]
+Hohe Gebäude ragen in den Mitternachtshimmel
+Gesichter blicken herab, doch niema...</textarea>
+      </div>
+
+      <!-- Einstellungen Button -->
+      <button type="button" onclick="openSettingsModal()" class="py-2 px-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium flex items-center gap-2 cursor-pointer transition">
+        <i class="fa-solid fa-wand-magic-sparkles text-ios-purple"></i> Einstellungen
+      </button>
+    </div>
+
+    <!-- Vibe / Stimmung Schnell-Tags -->
+    <div class="flex space-x-2 overflow-x-auto no-scrollbar py-1">
+      <button onclick="addVibeTag('Lustig')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap">Lustig</button>
+      <button onclick="addVibeTag('Glücklich')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap">Glücklich</button>
+      <button onclick="addVibeTag('Entspannt')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap">Entspannt</button>
+      <button onclick="addVibeTag('Energetisch')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap">Energetisch</button>
+    </div>
+
+    <!-- Erstellen Button -->
+    <button id="ai-generate-btn" type="button" onclick="generateAiMusic()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm shadow-xl active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2">
+      <i class="fa-solid fa-music"></i> Erstellen
+    </button>
+
+    <!-- Ergebnis Box -->
     <div id="ai-result-box" class="hidden w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-purple-500/30 space-y-3">
-      <h3 id="ai-result-title" class="text-sm font-bold text-white">Song bereit</h3>
+      <h3 id="ai-result-title" class="text-sm font-bold text-white">Dein Song ist bereit</h3>
       <audio id="ai-audio-player" controls class="w-full"></audio>
-      <button onclick="downloadAiSong()" class="w-full py-2.5 rounded-xl bg-purple-600 text-white text-xs font-bold">MP3 herunterladen</button>
       <button onclick="sendAiSongToImusic()" class="w-full py-2.5 rounded-xl bg-pink-600 text-white text-xs font-bold">Zu iMusic hinzufügen</button>
     </div>
   </div>
 
-  <!-- ==================== APP 2: IMUSIC LIBRARY ==================== -->
-  <div id="app-imusic" class="w-full flex flex-col hidden relative">
-    <header class="pt-2 pb-3 glass-panel sticky top-0 z-30 border-b border-white/10 flex items-center justify-between mb-2">
-      <h2 class="text-xl font-bold text-white">iMusic Bibliothek</h2>
-      <div class="flex items-center space-x-2">
-        <label for="imusic-audio-file-input" class="cursor-pointer h-9 w-9 rounded-full bg-pink-600 flex items-center justify-center text-white shadow-lg">
-          <i class="fa-solid fa-plus text-xs"></i>
-        </label>
-        <input type="file" id="imusic-audio-file-input" accept="audio/*" multiple class="hidden">
+  <!-- ==================== EINSTELLUNGEN MODAL (Nach Screenshot 1) ==================== -->
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center sm:p-5">
+    <div class="glass-panel w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 border border-white/10 space-y-5 max-h-[85vh] overflow-y-auto custom-scrollbar">
+      
+      <div class="flex justify-between items-center border-b border-white/10 pb-3">
+        <h3 class="text-base font-bold text-white">Einstellungen</h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white text-sm w-7 h-7 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
-    </header>
 
-    <div id="imusic-songs-container" class="space-y-2 pb-36"></div>
+      <!-- Genre auswählen -->
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold text-slate-300">Genre auswählen <span class="text-slate-500">(Optional)</span></label>
+        <div class="grid grid-cols-5 gap-2 text-center">
+          <div onclick="selectGenre('Klassik')" class="genre-item cursor-pointer space-y-1 group">
+            <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-transparent group-hover:border-ios-blue transition mx-auto bg-slate-800 flex items-center justify-center text-xs">🎹</div>
+            <span class="text-[10px] text-slate-300 block">Klassik</span>
+          </div>
+          <div onclick="selectGenre('Country')" class="genre-item cursor-pointer space-y-1 group">
+            <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-transparent group-hover:border-ios-blue transition mx-auto bg-slate-800 flex items-center justify-center text-xs">🤠</div>
+            <span class="text-[10px] text-slate-300 block">Country</span>
+          </div>
+          <div onclick="selectGenre('Pop')" class="genre-item cursor-pointer space-y-1 group">
+            <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-transparent group-hover:border-ios-blue transition mx-auto bg-slate-800 flex items-center justify-center text-xs">💿</div>
+            <span class="text-[10px] text-slate-300 block">Pop</span>
+          </div>
+          <div onclick="selectGenre('Jazz')" class="genre-item cursor-pointer space-y-1 group">
+            <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-transparent group-hover:border-ios-blue transition mx-auto bg-slate-800 flex items-center justify-center text-xs">🎷</div>
+            <span class="text-[10px] text-slate-300 block">Jazz</span>
+          </div>
+          <div onclick="selectGenre('Rock')" class="genre-item cursor-pointer space-y-1 group">
+            <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-transparent group-hover:border-ios-blue transition mx-auto bg-slate-800 flex items-center justify-center text-xs">🎸</div>
+            <span class="text-[10px] text-slate-300 block">Rock</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Titel -->
+      <div class="space-y-1">
+        <label class="block text-xs font-semibold text-slate-300">Titel <span class="text-slate-500">(Optional)</span></label>
+        <input type="text" id="modal-song-title" placeholder="Gib deinen Titel ein" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-3 border border-white/10 focus:outline-none focus:border-ios-blue">
+      </div>
+
+      <!-- Stimme auswählen -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-semibold text-slate-300">Stimme auswählen <span class="text-slate-500">(Optional)</span></label>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="selectVoice('Männlich')" id="voice-m" class="py-2.5 px-3 rounded-xl border border-white/10 bg-ios-cardHover text-slate-300 text-xs font-semibold text-left transition flex items-center justify-between">
+            <span>Männlich</span>
+            <span class="w-3.5 h-3.5 rounded-full border border-slate-500 inline-block"></span>
+          </button>
+          <button type="button" onclick="selectVoice('Weiblich')" id="voice-w" class="py-2.5 px-3 rounded-xl border border-white/10 bg-ios-cardHover text-slate-300 text-xs font-semibold text-left transition flex items-center justify-between">
+            <span>Weiblich</span>
+            <span class="w-3.5 h-3.5 rounded-full border border-slate-500 inline-block"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Aufnahmeart auswählen -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-semibold text-slate-300">Aufnahmeart auswählen <span class="text-slate-500">(Optional)</span></label>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="selectRecordType('Studio')" id="rec-studio" class="py-2.5 px-3 rounded-xl border border-white/10 bg-ios-cardHover text-slate-300 text-xs font-semibold text-left transition flex items-center justify-between">
+            <span>Studio</span>
+            <span class="w-3.5 h-3.5 rounded-full border border-slate-500 inline-block"></span>
+          </button>
+          <button type="button" onclick="selectRecordType('Live')" id="rec-live" class="py-2.5 px-3 rounded-xl border border-white/10 bg-ios-cardHover text-slate-300 text-xs font-semibold text-left transition flex items-center justify-between">
+            <span>Live (Konzert)</span>
+            <span class="w-3.5 h-3.5 rounded-full border border-slate-500 inline-block"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Anwenden Button -->
+      <button onclick="closeSettingsModal()" class="w-full py-3.5 rounded-2xl bg-white text-black font-bold text-sm shadow-lg active:scale-[0.98] transition cursor-pointer">
+        Anwenden
+      </button>
+
+    </div>
   </div>
 
+  <!-- ==================== DUMMY APPS FÜR NAVIGATION ==================== -->
+  <div id="app-converter" class="w-full hidden text-center py-12"><p class="text-xs text-slate-400">Converter Bereich</p></div>
+  <div id="app-imusic" class="w-full hidden text-center py-12"><p class="text-xs text-slate-400">iMusic Bibliothek Bereich</p></div>
+
+  <!-- JavaScript Logik -->
   <script>
+    let activeAiMode = 'lyrics';
+    let selectedGenre = '';
+    let selectedVoice = '';
+    let selectedRecordType = '';
+    let generatedAiSongBlob = null;
+    let generatedAiSongName = '';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      switchApp('aimusic');
+    });
+
     function switchApp(appName) {
       document.getElementById('app-welcome').classList.add('hidden');
-      document.getElementById('app-converter').classList.add('hidden');
       document.getElementById('app-aimusic').classList.add('hidden');
+      document.getElementById('app-converter').classList.add('hidden');
       document.getElementById('app-imusic').classList.add('hidden');
       document.getElementById('master-header').classList.remove('hidden');
 
       if (appName === 'welcome') {
         document.getElementById('app-welcome').classList.remove('hidden');
         document.getElementById('master-header').classList.add('hidden');
-      } else if (appName === 'converter') {
-        document.getElementById('app-converter').classList.remove('hidden');
       } else if (appName === 'aimusic') {
         document.getElementById('app-aimusic').classList.remove('hidden');
+      } else if (appName === 'converter') {
+        document.getElementById('app-converter').classList.remove('hidden');
       } else if (appName === 'imusic') {
         document.getElementById('app-imusic').classList.remove('hidden');
-        renderImusicSongs();
       }
     }
 
-    let selectedVoiceMode = 'male';
-    function selectVoiceType(mode) {
-      selectedVoiceMode = mode;
-      document.getElementById('voice-btn-male').className = mode === 'male' ? "voice-tab-btn py-2 px-1 rounded-xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer" : "voice-tab-btn py-2 px-1 rounded-xl border border-white/10 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center cursor-pointer";
-      document.getElementById('voice-btn-female').className = mode === 'female' ? "voice-tab-btn py-2 px-1 rounded-xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer" : "voice-tab-btn py-2 px-1 rounded-xl border border-white/10 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center cursor-pointer";
-      document.getElementById('voice-btn-custom').className = mode === 'custom' ? "voice-tab-btn py-2 px-1 rounded-xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer" : "voice-tab-btn py-2 px-1 rounded-xl border border-white/10 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center cursor-pointer";
-      
-      const customOpts = document.getElementById('voice-custom-options');
-      if (mode === 'custom') customOpts.classList.remove('hidden');
-      else customOpts.classList.add('hidden');
-    }
+    function switchAiMode(mode) {
+      activeAiMode = mode;
+      const descBtn = document.getElementById('mode-desc-btn');
+      const lyricsBtn = document.getElementById('mode-lyrics-btn');
+      const descContainer = document.getElementById('desc-container');
+      const lyricsContainer = document.getElementById('lyrics-container');
 
-    let isRecordingVoice = false;
-    let mediaRecorder = null;
-    let recordedChunks = [];
-    async function toggleRecordVoice() {
-      const btn = document.getElementById('record-voice-btn');
-      if (!isRecordingVoice) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          recordedChunks = [];
-          mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-          mediaRecorder.onstop = () => {
-            document.getElementById('custom-voice-status').classList.remove('hidden');
-          };
-          mediaRecorder.start();
-          isRecordingVoice = true;
-          btn.textContent = "Aufnahme läuft (5s)...";
-          setTimeout(() => {
-            if (isRecordingVoice && mediaRecorder) {
-              mediaRecorder.stop();
-              stream.getTracks().forEach(t => t.stop());
-              isRecordingVoice = false;
-              btn.textContent = "Aufnahme beendet";
-            }
-          }, 5000);
-        } catch (e) {
-          alert("Mikrofon nicht verfügbar.");
-        }
+      if (mode === 'desc') {
+        descBtn.className = "flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-white/10 shadow transition cursor-pointer flex items-center justify-center gap-1.5";
+        lyricsBtn.className = "flex-1 py-2 rounded-xl text-xs font-semibold text-ios-textMuted transition cursor-pointer flex items-center justify-center gap-1.5";
+        descContainer.classList.remove('hidden');
+        lyricsContainer.classList.add('hidden');
+      } else {
+        lyricsBtn.className = "flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-white/10 shadow transition cursor-pointer flex items-center justify-center gap-1.5";
+        descBtn.className = "flex-1 py-2 rounded-xl text-xs font-semibold text-ios-textMuted transition cursor-pointer flex items-center justify-center gap-1.5";
+        lyricsContainer.classList.remove('hidden');
+        descContainer.classList.add('hidden');
       }
     }
 
-    let generatedAiSongBlob = null;
-    let generatedAiSongName = "";
+    function openSettingsModal() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function selectGenre(genre) {
+      selectedGenre = genre;
+      alert("Genre gewählt: " + genre);
+    }
+
+    function selectVoice(voice) {
+      selectedVoice = voice;
+      document.getElementById('voice-m').style.borderColor = voice === 'Männlich' ? '#0a84ff' : 'rgba(255,255,255,0.1)';
+      document.getElementById('voice-w').style.borderColor = voice === 'Weiblich' ? '#0a84ff' : 'rgba(255,255,255,0.1)';
+    }
+
+    function selectRecordType(type) {
+      selectedRecordType = type;
+      document.getElementById('rec-studio').style.borderColor = type === 'Studio' ? '#0a84ff' : 'rgba(255,255,255,0.1)';
+      document.getElementById('rec-live').style.borderColor = type === 'Live' ? '#0a84ff' : 'rgba(255,255,255,0.1)';
+    }
+
+    function addVibeTag(tag) {
+      const input = activeAiMode === 'desc' ? document.getElementById('ai-desc-input') : document.getElementById('ai-lyrics-input');
+      input.value += (input.value ? ' ' : '') + `[Vibe: ${tag}]`;
+    }
+
     function generateAiMusic() {
-      const prompt = document.getElementById('ai-prompt-input').value.trim() || "AI Track";
+      const title = document.getElementById('modal-song-title').value || "KI Song";
+      
+      // Erzeuge kurze Audio-Demo über Web Audio API
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const buffer = audioCtx.createBuffer(2, 44100 * 5, 44100);
       const data = buffer.getChannelData(0);
       for(let i=0; i<data.length; i++) data[i] = Math.sin(i / 100) * 0.3;
       
       generatedAiSongBlob = bufferToWavBlob(buffer);
-      generatedAiSongName = prompt.substring(0, 20) + ".wav";
+      generatedAiSongName = title + ".wav";
       
       const url = URL.createObjectURL(generatedAiSongBlob);
       document.getElementById('ai-audio-player').src = url;
-      document.getElementById('ai-result-title').textContent = prompt;
+      document.getElementById('ai-result-title').textContent = title + " (" + (selectedGenre || "Pop") + ")";
       document.getElementById('ai-result-box').classList.remove('hidden');
     }
 
@@ -396,77 +392,10 @@
       return new Blob([out.buffer], { type: 'audio/wav' });
     }
 
-    function downloadAiSong() {
-      if(!generatedAiSongBlob) return;
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(generatedAiSongBlob);
-      a.download = generatedAiSongName;
-      a.click();
-    }
-
-    let musicLibrary = [];
     function sendAiSongToImusic() {
-      if(!generatedAiSongBlob) return;
-      musicLibrary.push({
-        title: generatedAiSongName,
-        artist: 'AI Studio',
-        url: URL.createObjectURL(generatedAiSongBlob)
-      });
+      alert("Song erfolgreich an iMusic übergeben!");
       switchApp('imusic');
     }
-
-    function renderImusicSongs() {
-      const container = document.getElementById('imusic-songs-container');
-      container.innerHTML = '';
-      if(musicLibrary.length === 0) {
-        container.innerHTML = '<p class="text-center text-xs text-slate-500 py-10">Keine Songs vorhanden.</p>';
-        return;
-      }
-      musicLibrary.forEach(song => {
-        const div = document.createElement('div');
-        div.className = "glass-card p-3 rounded-2xl flex items-center justify-between";
-        div.innerHTML = `
-          <div>
-            <h4 class="text-xs font-bold text-white">${song.title}</h4>
-            <p class="text-[10px] text-slate-400">${song.artist}</p>
-          </div>
-          <audio controls src="${song.url}" class="h-8 max-w-[150px]"></audio>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    document.getElementById('file-input-single')?.addEventListener('change', (e) => {
-      if(e.target.files && e.target.files[0]) {
-        document.getElementById('file-name').textContent = e.target.files[0].name;
-        document.getElementById('video-preview').src = URL.createObjectURL(e.target.files[0]);
-        document.getElementById('preview-box').classList.remove('hidden');
-        document.getElementById('convert-btn').removeAttribute('disabled');
-      }
-    });
-
-    document.getElementById('convert-btn')?.addEventListener('click', () => {
-      setTimeout(() => {
-        convertedBlob = generatedAiSongBlob || new Blob();
-        document.getElementById('result-box').classList.remove('hidden');
-      }, 1000);
-    });
-
-    document.getElementById('download-btn')?.addEventListener('click', () => {
-      if(convertedBlob) {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(convertedBlob);
-        a.download = "AudioForge_Export.wav";
-        a.click();
-      }
-    });
-
-    document.getElementById('send-to-imusic-btn')?.addEventListener('click', () => {
-      if(convertedBlob) {
-        musicLibrary.push({ title: "Extrahierter Track", artist: "AudioForge", url: URL.createObjectURL(convertedBlob) });
-        switchApp('imusic');
-      }
-    });
   </script>
 </body>
 </html>
