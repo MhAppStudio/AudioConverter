@@ -1,917 +1,605 @@
 <!DOCTYPE html>
-<html lang="de" class="dark h-full">
+<html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>AudioForge & iMusic Studio Suite Pro</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- MP4Box.js for native iOS MOV/MP4 audio demuxing -->
-  <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.2/dist/mp4box.all.min.js"></script>
-  <!-- lamejs for high-efficiency MP3 encoding -->
-  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
-  <!-- JSZip for batch download ZIP generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <!-- Google Font Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-          },
-          colors: {
-            ios: {
-              bg: '#000000',
-              card: '#1c1c1e',
-              cardHover: '#2c2c2e',
-              blue: '#0a84ff',
-              indigo: '#5e5ce6',
-              purple: '#bf5af2',
-              green: '#30d158',
-              red: '#ff453a',
-              orange: '#ff9f0a',
-              pink: '#FA233B',
-              textMuted: '#8e8e93'
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    body {
-      background-color: #000000;
-      color: #ffffff;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, Helvetica, Arial, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      height: 22px;
-      width: 22px;
-      border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-      cursor: pointer;
-      margin-top: -9px;
-    }
-    input[type=range]::-webkit-slider-runnable-track {
-      width: 100%;
-      height: 4px;
-      cursor: pointer;
-      background: #3a3a3c;
-      border-radius: 2px;
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #3a3a3c;
-      border-radius: 4px;
-    }
-    .glass-panel {
-      background: rgba(28, 28, 30, 0.85);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-    }
-    .glass-card {
-      background: rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    .player-modal-slide {
-      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-8px); }
-    }
-    .animate-float {
-      animation: float 4s ease-in-out infinite;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI SongStudio - KI Musik Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; color: #f8fafc; }
+        .glass-modal { background: rgba(15, 23, 42, 0.92); backdrop-blur: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .dark-glass { background: rgba(18, 24, 38, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .genre-card { transition: all 0.2s ease; }
+        .genre-card.selected { border-color: #6366f1; background: rgba(99, 102, 241, 0.15); box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+        .option-chip.selected { background: #6366f1; border-color: #6366f1; color: white; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+    </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-start max-w-xl mx-auto px-3 sm:px-6 pb-32 pt-3">
+<body class="min-h-screen flex flex-col pb-20 selection:bg-indigo-500 selection:text-white">
 
-  <!-- Master Navigation Header (App Switcher) -->
-  <header id="master-header" class="w-full bg-ios-card p-1.5 rounded-2xl mb-4 border border-white/10 shadow-xl z-30 grid grid-cols-4 gap-1">
-    <button onclick="switchApp('welcome')" id="nav-btn-welcome" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center">
-      <i class="fa-solid fa-house text-sm"></i>
-    </button>
-    <button onclick="switchApp('converter')" id="nav-btn-converter" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1">
-      <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-      <span class="truncate">AudioForge</span>
-    </button>
-    <button onclick="switchApp('aimusic')" id="nav-btn-aimusic" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-white bg-purple-600 shadow transition-all cursor-pointer flex items-center justify-center gap-1">
-      <i class="fa-solid fa-robot text-xs"></i>
-      <span class="truncate">AI Studio</span>
-    </button>
-    <button onclick="switchApp('imusic')" id="nav-btn-imusic" type="button" class="py-2.5 px-2 rounded-xl text-xs font-bold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1">
-      <i class="fa-solid fa-music text-xs"></i>
-      <span class="truncate">iMusic</span>
-    </button>
-  </header>
-
-  <!-- ==================== WELCOME & HOME SCREEN ==================== -->
-  <div id="app-welcome" class="w-full flex flex-col items-center pt-4 pb-12 hidden">
-    <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-pink-600 flex items-center justify-center shadow-2xl shadow-indigo-500/30 mb-6 animate-float border border-white/20">
-      <i class="fa-solid fa-headphones-simple text-4xl text-white"></i>
-    </div>
-    
-    <span class="text-xs font-bold bg-ios-blue/15 text-ios-blue border border-ios-blue/30 px-3 py-1 rounded-full mb-3 flex items-center gap-1.5">
-      <i class="fa-solid fa-bolt text-[10px]"></i> Studio Suite v3.0 + Pro AI & Auto MP3
-    </span>
-
-    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-center bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent mb-2">
-      AudioForge & iMusic Studio
-    </h1>
-    <p class="text-xs sm:text-sm text-ios-textMuted text-center max-w-sm mb-8 leading-relaxed">
-      Die ultimative iOS Web-App mit Stimm-Auswahl, KI-Komposition, automatischem MP3-Download & Sleep Timer.
-    </p>
-
-    <div class="w-full space-y-3.5 mb-8">
-      <div onclick="switchApp('converter')" class="w-full bg-ios-card hover:bg-ios-cardHover active:scale-[0.98] transition-all rounded-3xl p-5 border border-white/10 shadow-xl cursor-pointer flex items-center justify-between group">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-ios-blue/20 text-ios-blue flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-white mb-0.5">AudioForge Studio</h3>
-            <p class="text-xs text-ios-textMuted">Video-zu-Audio, MP3/WAV/M4R, Effekte & Radio-Preset</p>
-          </div>
+    <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-music text-white text-sm"></i>
+                </div>
+                <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-indigo-200 to-purple-400 bg-clip-text text-transparent">Musik erstellen</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openApiKeyModal()" class="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center border border-slate-700/60 transition text-slate-300" title="API Schlüssel">
+                    <i class="fa-solid fa-key text-xs text-indigo-400"></i>
+                </button>
+            </div>
         </div>
-        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:translate-x-1 transition">
-          <i class="fa-solid fa-chevron-right text-xs"></i>
-        </div>
-      </div>
-
-      <div onclick="switchApp('aimusic')" class="w-full bg-ios-card hover:bg-ios-cardHover active:scale-[0.98] transition-all rounded-3xl p-5 border border-white/10 shadow-xl cursor-pointer flex items-center justify-between group">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-ios-purple/20 text-ios-purple flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
-            <i class="fa-solid fa-robot"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-white mb-0.5">AI Music Creator</h3>
-            <p class="text-xs text-ios-textMuted">Stimmen (M/W/Eigene), Lyrics-Gen & Auto-MP3 Download</p>
-          </div>
-        </div>
-        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:translate-x-1 transition">
-          <i class="fa-solid fa-chevron-right text-xs"></i>
-        </div>
-      </div>
-
-      <div onclick="switchApp('imusic')" class="w-full bg-ios-card hover:bg-ios-cardHover active:scale-[0.98] transition-all rounded-3xl p-5 border border-white/10 shadow-xl cursor-pointer flex items-center justify-between group">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-500 flex items-center justify-center text-lg group-hover:scale-110 transition-transform shadow-inner">
-            <i class="fa-solid fa-music"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-white mb-0.5">iMusic Bibliothek</h3>
-            <p class="text-xs text-ios-textMuted">Player, Sleep-Timer, Equalizer & Import-Verwaltung</p>
-          </div>
-        </div>
-        <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:translate-x-1 transition">
-          <i class="fa-solid fa-chevron-right text-xs"></i>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ==================== APP 1: AUDIOFORGE CONVERTER & STUDIO ==================== -->
-  <div id="app-converter" class="w-full flex flex-col hidden space-y-4">
-    <div class="flex items-center justify-between pt-1">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-2"/>
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight text-white">AudioForge iOS Studio</h1>
-          <p class="text-[11px] text-ios-textMuted font-medium">Video-zu-Audio Converter & Studio Editor</p>
-        </div>
-      </div>
-      <span class="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-full flex items-center gap-1">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> iOS Ready
-      </span>
-    </div>
-
-    <!-- Mode Selector: Single vs Batch -->
-    <div class="w-full bg-ios-card p-1 rounded-2xl flex border border-white/5 shadow-md">
-      <button id="tab-single" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-ios-blue shadow transition-all cursor-pointer flex items-center justify-center gap-1.5">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-        Einzelnes Video
-      </button>
-      <button id="tab-batch" type="button" class="flex-1 py-2 rounded-xl text-xs font-semibold text-ios-textMuted hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-        Stapelverarbeitung (Batch)
-      </button>
-    </div>
-
-    <div id="error-banner" class="hidden w-full p-3.5 bg-red-500/15 border border-red-500/30 rounded-2xl flex items-start gap-3">
-      <div class="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">!</div>
-      <div class="flex-1">
-        <p class="text-xs font-semibold text-red-300">Hinweis / Fehler</p>
-        <p id="error-message" class="text-xs text-red-200/90 leading-relaxed mt-0.5"></p>
-      </div>
-    </div>
-
-    <!-- Hidden native file inputs -->
-    <input type="file" id="file-input-single" accept="video/*" class="sr-only">
-    <input type="file" id="file-input-batch" accept="video/*" multiple class="sr-only">
-
-    <label id="upload-box" for="file-input-single" class="w-full block bg-ios-card border-2 border-dashed border-gray-700 hover:border-ios-blue active:border-ios-blue rounded-3xl p-6 text-center cursor-pointer transition-all relative group overflow-hidden shadow-xl">
-      <div class="flex flex-col items-center justify-center py-4 pointer-events-none">
-        <div class="w-14 h-14 rounded-2xl bg-ios-blue/10 flex items-center justify-center text-ios-blue mb-3 group-hover:scale-110 transition-transform shadow-inner">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-          </svg>
-        </div>
-        <p class="font-semibold text-sm text-gray-100 mb-1">Hier tippen um Video auszuwählen</p>
-        <p class="text-xs text-ios-textMuted">Unterstützt `.mov`, `.mp4` & `.m4v` aus der iOS Mediathek</p>
-      </div>
-    </label>
-
-    <div id="preview-box" class="hidden w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-white/5 space-y-3">
-      <div class="flex justify-between items-center">
-        <span id="file-name" class="text-xs font-semibold text-gray-200 truncate max-w-[210px]">video.mov</span>
-        <label for="file-input-single" class="text-xs text-ios-blue font-semibold hover:underline cursor-pointer py-1 px-2.5 bg-ios-blue/10 rounded-xl">Anderes Video</label>
-      </div>
-      <div class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-inner border border-white/10">
-        <video id="video-preview" playsinline controls class="w-full h-full object-contain"></video>
-      </div>
-    </div>
-
-    <div id="batch-box" class="hidden w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-white/5 space-y-3">
-      <div class="flex justify-between items-center pb-2 border-b border-white/5">
-        <h3 class="text-xs font-bold text-ios-textMuted uppercase">Ausgewählte Videos (<span id="batch-count">0</span>)</h3>
-        <label for="file-input-batch" class="text-xs text-ios-blue font-semibold hover:underline cursor-pointer py-1 px-2.5 bg-ios-blue/10 rounded-xl">Weitere hinzufügen</label>
-      </div>
-      <div id="batch-list" class="space-y-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar"></div>
-    </div>
-
-    <!-- Studio Editing Settings Card -->
-    <div class="w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-white/5 space-y-3">
-      <div class="flex items-center justify-between pb-2 border-b border-white/5">
-        <h2 class="text-xs font-bold tracking-wider text-ios-textMuted uppercase">Studio Bearbeitung & Formate</h2>
-        <button id="ringtone-preset-btn" type="button" class="text-[10px] font-bold px-2 py-1 rounded-full bg-ios-purple/15 text-ios-purple border border-ios-purple/30 cursor-pointer">iPhone Ringtone (30s)</button>
-      </div>
-      <input type="text" id="custom-filename-input" placeholder="Wunsch-Dateiname" class="w-full bg-ios-cardHover text-white text-xs rounded-xl p-2.5 border border-white/10 focus:outline-none focus:border-ios-blue">
-      
-      <div class="grid grid-cols-3 gap-2">
-        <button id="format-mp3" type="button" class="format-btn py-2 px-2 rounded-xl border border-ios-blue bg-ios-blue/20 text-ios-blue text-xs font-semibold text-center cursor-pointer">MP3 (Klein)</button>
-        <button id="format-wav" type="button" class="format-btn py-2 px-2 rounded-xl border border-gray-700 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center cursor-pointer">WAV (HD)</button>
-        <button id="format-m4r" type="button" class="format-btn py-2 px-2 rounded-xl border border-gray-700 bg-ios-cardHover text-gray-400 text-xs font-semibold text-center cursor-pointer">M4R (Ring)</button>
-      </div>
-
-      <button id="convert-btn" type="button" disabled class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-ios-blue via-indigo-600 to-ios-indigo disabled:opacity-40 text-white font-bold text-sm shadow-xl cursor-pointer">Jetzt Audio extrahieren</button>
-    </div>
-
-    <div id="progress-box" class="hidden w-full bg-ios-card rounded-2xl p-4 border border-white/5 shadow-xl space-y-2">
-      <div class="flex justify-between text-xs">
-        <span id="progress-status" class="text-gray-300">Verarbeite...</span>
-        <span id="progress-percent" class="text-ios-blue font-bold font-mono">0%</span>
-      </div>
-      <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
-        <div id="progress-bar" class="h-full bg-gradient-to-r from-ios-blue to-ios-purple w-0 transition-all duration-300"></div>
-      </div>
-    </div>
-
-    <div id="result-box" class="hidden w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-emerald-500/30 text-center space-y-3">
-      <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-lg shadow-lg">
-        <i class="fa-solid fa-check"></i>
-      </div>
-      <h3 class="text-sm font-bold text-white">Audio erfolgreich extrahiert!</h3>
-      <p id="result-info" class="text-xs text-ios-textMuted">Bereit zum Anhören & Download</p>
-      <div class="flex flex-col gap-2">
-        <button id="download-btn" type="button" class="w-full py-3 rounded-xl bg-emerald-500 text-black font-bold text-xs cursor-pointer shadow-lg"><i class="fa-solid fa-download"></i> Audio herunterladen</button>
-        <button id="batch-zip-btn" type="button" class="hidden w-full py-3 rounded-xl bg-ios-indigo text-white font-bold text-xs cursor-pointer"><i class="fa-solid fa-file-zipper"></i> Alle als ZIP</button>
-        <button id="send-to-imusic-btn" type="button" class="w-full py-3 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs cursor-pointer shadow-lg"><i class="fa-solid fa-plus-circle"></i> Direkt zu iMusic Library</button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ==================== APP 1.5: AI MUSIC CREATOR (EXACT DESIGN MATCH) ==================== -->
-  <div id="app-aimusic" class="w-full flex flex-col space-y-4">
-    <!-- Header title -->
-    <div class="flex items-center justify-between pt-1 px-1">
-      <h1 class="text-xl font-extrabold tracking-tight text-white">Musik erstellen</h1>
-      <span class="text-[10px] font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-        <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i> Gemini Engine
-      </span>
-    </div>
-
-    <!-- Main Card Container -->
-    <div class="w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-white/10 space-y-3 relative overflow-hidden">
-      <!-- Top Mode Toggle Switch -->
-      <div class="bg-black/40 p-1 rounded-full flex border border-white/5 shadow-inner">
-        <button id="mode-desc-btn" type="button" onclick="setCreationMode('description')" class="flex-1 py-2 rounded-full text-xs font-semibold text-ios-textMuted hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-align-left text-[11px]"></i> Songbeschreibung
-        </button>
-        <button id="mode-lyrics-btn" type="button" onclick="setCreationMode('lyrics')" class="flex-1 py-2 rounded-full text-xs font-semibold text-white bg-white/15 shadow transition cursor-pointer flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-microphone text-[11px]"></i> Songtext-Modus
-        </button>
-      </div>
-
-      <!-- Input Area / Textarea -->
-      <div class="relative">
-        <textarea id="ai-prompt-input" rows="5" class="w-full bg-ios-cardHover text-white text-xs sm:text-sm rounded-2xl p-3.5 border border-white/10 focus:outline-none focus:border-purple-500 transition resize-none leading-relaxed font-mono">[Strophe]
-Ich laufe durch die Straßen, verloren in der Stadt
-Kein Plan, kein Ziel, suche nur nach etwas Schönem
-Überfüllte Gehwege, Neonlichter über mir
-Menschen ziehen vorbei, doch keiner sieht mein Band
-
-[Strophe 2]
-Hohe Gebäude ragen in den Mitternachtshimmel
-Gesichter blicken herab, doch niema...</textarea>
-      </div>
-
-      <!-- Bottom action inside card: Settings Button -->
-      <div class="flex items-center justify-between pt-1">
-        <button type="button" onclick="openSettingsModal()" class="py-2 px-3.5 rounded-full bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow cursor-pointer">
-          <i class="fa-solid fa-sliders text-purple-400 text-xs"></i> Einstellungen
-        </button>
-        <span id="active-settings-badge" class="text-[10px] text-ios-textMuted italic truncate max-w-[180px]">Synthwave, Männlich, Studio</span>
-      </div>
-    </div>
-
-    <!-- Vibe / Mood Chips Horizontal Scroll -->
-    <div class="w-full flex space-x-2 overflow-x-auto no-scrollbar py-1">
-      <button onclick="selectVibe('Vorschlagen')" class="vibe-chip px-4 py-2 rounded-full text-xs font-semibold bg-white/20 text-white transition whitespace-nowrap flex items-center gap-1.5 border border-white/20 shadow"><i class="fa-solid fa-wand-magic-sparkles text-purple-400 text-[10px]"></i> Vorschlagen</button>
-      <button onclick="selectVibe('Lustig')" class="vibe-chip px-4 py-2 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap border border-white/5">Lustig</button>
-      <button onclick="selectVibe('Glücklich')" class="vibe-chip px-4 py-2 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap border border-white/5">Glücklich</button>
-      <button onclick="selectVibe('Entspannt')" class="vibe-chip px-4 py-2 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap border border-white/5">Entspannt</button>
-      <button onclick="selectVibe('Energetisch')" class="vibe-chip px-4 py-2 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 transition whitespace-nowrap border border-white/5">Energetisch</button>
-    </div>
-
-    <!-- Big iOS Create Button -->
-    <button id="ai-generate-btn" type="button" onclick="generateAiMusic()" class="w-full py-4 rounded-full bg-white hover:bg-gray-200 active:scale-[0.98] text-black font-extrabold text-sm shadow-2xl transition flex items-center justify-center gap-2 cursor-pointer mt-2">
-      <i class="fa-solid fa-music text-purple-600"></i> Erstellen
-    </button>
-
-    <!-- AI Generation Loading Box -->
-    <div id="ai-loading-box" class="hidden w-full bg-ios-card rounded-3xl p-6 text-center border border-white/5 shadow-2xl space-y-3">
-      <div class="w-12 h-12 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center mx-auto text-xl animate-spin">
-        <i class="fa-solid fa-compact-disc"></i>
-      </div>
-      <h3 class="text-sm font-bold text-white" id="ai-loading-status">Komponiere deinen Song...</h3>
-      <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
-        <div id="ai-progress-bar" class="h-full bg-gradient-to-r from-purple-500 to-pink-500 w-1/3 transition-all"></div>
-      </div>
-    </div>
-
-    <!-- AI Result Box -->
-    <div id="ai-result-box" class="hidden w-full bg-ios-card rounded-3xl p-4 shadow-2xl border border-purple-500/30 space-y-3">
-      <div class="flex items-center justify-between border-b border-white/5 pb-2">
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-purple-500 animate-ping"></div>
-          <h3 id="ai-result-title" class="text-sm font-bold text-white">Mein KI Song</h3>
-        </div>
-        <span id="ai-result-genre-badge" class="text-[10px] font-semibold bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full">Synthwave</span>
-      </div>
-
-      <div class="bg-black/50 p-3 rounded-2xl border border-white/10 space-y-2">
-        <div class="flex justify-between text-xs text-ios-textMuted">
-          <span class="font-semibold text-gray-300 flex items-center gap-1"><i class="fa-solid fa-waveform text-purple-400"></i> AI Preview Player</span>
-          <span id="ai-player-time" class="font-mono">0:00 / 0:15</span>
-        </div>
-        <canvas id="ai-waveform-canvas" class="w-full h-14 rounded-xl bg-black cursor-pointer border border-white/5"></canvas>
-        <div class="flex items-center justify-center gap-4 pt-1">
-          <button id="ai-play-btn" type="button" onclick="toggleAiPlay()" class="w-11 h-11 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-lg cursor-pointer text-sm">
-            <i class="fa-solid fa-play ml-0.5"></i>
-          </button>
-        </div>
-        <audio id="ai-audio-player" class="hidden"></audio>
-      </div>
-
-      <div class="flex flex-col gap-2 pt-1">
-        <button id="ai-download-btn" type="button" onclick="downloadAiSong()" class="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg cursor-pointer flex items-center justify-center gap-2">
-          <i class="fa-solid fa-download"></i> MP3 herunterladen
-        </button>
-        <button id="ai-send-imusic-btn" type="button" onclick="sendAiSongToImusic()" class="w-full py-3 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs cursor-pointer flex items-center justify-center gap-2">
-          <i class="fa-solid fa-plus-circle"></i> Direkt zu iMusic Library hinzufügen
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ==================== SETTINGS MODAL ==================== -->
-  <div id="settings-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-0 sm:p-5">
-    <div class="glass-card w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 border border-white/10 space-y-5 max-h-[85vh] overflow-y-auto custom-scrollbar">
-      <div class="flex justify-between items-center border-b border-white/10 pb-3 relative">
-        <div class="w-10 h-1 bg-white/20 rounded-full absolute -top-2 left-1/2 -translate-x-1/2 sm:hidden"></div>
-        <h3 class="text-base font-bold text-white text-center w-full">Einstellungen</h3>
-        <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 flex items-center justify-center text-xs transition cursor-pointer absolute right-0"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <div class="space-y-2">
-        <label class="block text-xs font-semibold text-slate-300">Genre auswählen <span class="text-ios-textMuted font-normal">(Optional)</span></label>
-        <div class="flex space-x-3 overflow-x-auto no-scrollbar py-1">
-          <div onclick="selectGenre('Jazz')" class="genre-card flex-shrink-0 w-24 h-24 rounded-2xl bg-cover bg-center relative cursor-pointer border-2 border-transparent overflow-hidden shadow-lg transition hover:scale-105" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2)), url('https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=300&auto=format&fit=crop&q=60')"><span class="absolute bottom-2 left-0 right-0 text-center text-xs font-bold text-white">Jazz</span></div>
-          <div onclick="selectGenre('Rock')" class="genre-card flex-shrink-0 w-24 h-24 rounded-2xl bg-cover bg-center relative cursor-pointer border-2 border-transparent overflow-hidden shadow-lg transition hover:scale-105" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2)), url('https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=300&auto=format&fit=crop&q=60')"><span class="absolute bottom-2 left-0 right-0 text-center text-xs font-bold text-white">Rock</span></div>
-          <div onclick="selectGenre('Rap')" class="genre-card flex-shrink-0 w-24 h-24 rounded-2xl bg-cover bg-center relative cursor-pointer border-2 border-transparent overflow-hidden shadow-lg transition hover:scale-105" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2)), url('https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&auto=format&fit=crop&q=60')"><span class="absolute bottom-2 left-0 right-0 text-center text-xs font-bold text-white">Rap</span></div>
-          <div onclick="selectGenre('House')" class="genre-card flex-shrink-0 w-24 h-24 rounded-2xl bg-cover bg-center relative cursor-pointer border-2 border-transparent overflow-hidden shadow-lg transition hover:scale-105" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2)), url('https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?w=300&auto=format&fit=crop&q=60')"><span class="absolute bottom-2 left-0 right-0 text-center text-xs font-bold text-white">House</span></div>
-          <div onclick="selectGenre('Synthwave')" class="genre-card flex-shrink-0 w-24 h-24 rounded-2xl bg-cover bg-center relative cursor-pointer border-2 border-purple-500 overflow-hidden shadow-lg transition hover:scale-105" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2)), url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=60')"><span class="absolute bottom-2 left-0 right-0 text-center text-xs font-bold text-white">Synthwave</span></div>
-        </div>
-      </div>
-
-      <div class="space-y-1.5">
-        <label class="block text-xs font-semibold text-slate-300">Titel <span class="text-ios-textMuted font-normal">(Optional)</span></label>
-        <input type="text" id="modal-song-title" placeholder="Gib deinen Titel ein" class="w-full bg-ios-cardHover text-white text-xs rounded-2xl p-3 border border-white/10 focus:outline-none focus:border-purple-500">
-      </div>
-
-      <div class="space-y-2">
-        <label class="block text-xs font-semibold text-slate-300">Stimme auswählen</label>
-        <div class="grid grid-cols-2 gap-3">
-          <button type="button" onclick="selectVoiceModal('male')" id="modal-voice-male" class="py-3 px-4 rounded-2xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer transition">Männlich</button>
-          <button type="button" onclick="selectVoiceModal('female')" id="modal-voice-female" class="py-3 px-4 rounded-2xl border border-white/10 bg-ios-cardHover text-slate-400 text-xs font-semibold text-center cursor-pointer transition">Weiblich</button>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <label class="block text-xs font-semibold text-slate-300">Aufnahmeart auswählen</label>
-        <div class="grid grid-cols-2 gap-3">
-          <button type="button" onclick="selectRecordingType('Studio')" id="modal-rec-studio" class="py-3 px-4 rounded-2xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer transition">Studio</button>
-          <button type="button" onclick="selectRecordingType('Live')" id="modal-rec-live" class="py-3 px-4 rounded-2xl border border-white/10 bg-ios-cardHover text-slate-400 text-xs font-semibold text-center cursor-pointer transition">Live (Konzert)</button>
-        </div>
-      </div>
-
-      <button type="button" onclick="closeSettingsModal()" class="w-full py-3.5 rounded-full bg-white hover:bg-gray-200 text-black font-extrabold text-sm shadow-xl cursor-pointer">Anwenden</button>
-    </div>
-  </div>
-
-
-  <!-- ==================== APP 2: IMUSIC LIBRARY & PLAYER ==================== -->
-  <div id="app-imusic" class="w-full flex flex-col hidden relative space-y-3">
-    <header class="pt-2 pb-3 glass-panel sticky top-0 z-30 border-b border-white/10 flex items-center justify-between">
-      <div>
-        <h2 class="text-xl font-bold tracking-tight text-white">iMusic Bibliothek</h2>
-        <p class="text-[11px] text-slate-400 font-medium">Alle Titel & Songs</p>
-      </div>
-      <div class="flex items-center space-x-2">
-        <button onclick="toggleSleepTimerModal()" class="h-9 w-9 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-pink-400 cursor-pointer"><i class="fa-solid fa-clock text-xs"></i></button>
-        <label for="imusic-audio-file-input" class="cursor-pointer h-9 w-9 rounded-full bg-pink-600 hover:bg-pink-500 flex items-center justify-center text-white shadow-lg"><i class="fa-solid fa-plus text-xs"></i></label>
-        <input type="file" id="imusic-audio-file-input" accept="audio/*" multiple class="hidden">
-        <button onclick="toggleEqModal()" class="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"><i class="fa-solid fa-sliders text-xs"></i></button>
-      </div>
     </header>
 
-    <div class="relative flex items-center">
-      <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-slate-400 text-xs"></i>
-      <input type="text" id="imusic-search-input" placeholder="In Bibliothek suchen..." class="w-full pl-9 pr-4 py-2 bg-white/10 text-white placeholder-slate-400 text-xs rounded-xl outline-none focus:ring-2 focus:ring-pink-500">
-    </div>
-
-    <div class="flex space-x-2 overflow-x-auto no-scrollbar py-1">
-      <button onclick="filterImusicCategory('all')" id="tab-imusic-all" class="imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-pink-600 text-white shadow-md whitespace-nowrap">Alle Songs</button>
-      <button onclick="filterImusicCategory('favorites')" id="tab-imusic-favorites" class="imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 whitespace-nowrap">Favoriten</button>
-      <button onclick="filterImusicCategory('playlists')" id="tab-imusic-playlists" class="imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 whitespace-nowrap">Playlists</button>
-      <button onclick="filterImusicCategory('artists')" id="tab-imusic-artists" class="imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 whitespace-nowrap">Künstler</button>
-    </div>
-
-    <div id="imusic-songs-container" class="space-y-2 pb-32"></div>
-
-    <div id="imusic-empty-state" class="hidden py-14 flex flex-col items-center justify-center text-center">
-      <div class="w-16 h-16 rounded-full bg-pink-500/10 text-pink-500 flex items-center justify-center mb-3 text-2xl"><i class="fa-solid fa-music"></i></div>
-      <h3 class="text-base font-semibold text-white">Keine Musik in iMusic</h3>
-      <p class="text-xs text-slate-400 max-w-xs mt-1">Füge Lieder aus dem Converter, AI Studio oder per MP3-Upload hinzu.</p>
-    </div>
-
-    <div id="imusic-playlists-view" class="hidden space-y-3 pb-32">
-      <h3 class="text-xs font-bold text-slate-300 uppercase">Deine Playlists</h3>
-      <div id="imusic-playlists-grid" class="grid grid-cols-2 gap-3"></div>
-    </div>
-
-    <div id="imusic-artists-view" class="hidden space-y-2 pb-32"></div>
-
-    <!-- Mini Player Bar -->
-    <div id="imusic-mini-player" class="absolute bottom-2 left-0 right-0 glass-panel rounded-2xl border border-white/10 p-2.5 shadow-2xl flex items-center justify-between z-40 cursor-pointer" onclick="openFullPlayer()">
-      <div class="flex items-center space-x-3 overflow-hidden flex-1 mr-2">
-        <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500"><i class="fa-solid fa-music text-xs"></i></div>
-        <div class="overflow-hidden flex-1">
-          <h4 id="imusic-mini-title" class="text-xs font-bold text-white truncate">Kein Titel ausgewählt</h4>
-          <p id="imusic-mini-artist" class="text-[10px] text-slate-400 truncate">Wähle Musik aus</p>
-        </div>
-      </div>
-      <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
-        <button id="imusic-mini-play-btn" onclick="togglePlayPause()" class="w-9 h-9 rounded-full flex items-center justify-center text-white hover:text-pink-500"><i class="fa-solid fa-play text-sm"></i></button>
-        <button onclick="playNextSong()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white"><i class="fa-solid fa-forward-step text-xs"></i></button>
-      </div>
-      <div class="absolute bottom-0 left-2 right-2 h-0.5 bg-white/10 rounded-full overflow-hidden">
-        <div id="imusic-mini-progress-fill" class="h-full bg-pink-500 w-0"></div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ==================== FULLSCREEN PLAYER MODAL ==================== -->
-  <div id="full-player-modal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex flex-col justify-between p-6 transform translate-y-full player-modal-slide">
-    <div class="flex items-center justify-between pt-4">
-      <button onclick="closeFullPlayer()" class="text-slate-400 hover:text-white p-2 text-lg"><i class="fa-solid fa-chevron-down"></i></button>
-      <span class="text-[10px] uppercase font-bold tracking-widest text-pink-500">iMusic Player</span>
-      <button onclick="toggleVisualizerMode()" class="text-slate-400 hover:text-pink-400 p-2 text-sm"><i class="fa-solid fa-chart-simple"></i></button>
-    </div>
-    <div class="relative my-auto flex flex-col items-center justify-center">
-      <div class="relative w-60 h-60 sm:w-72 sm:h-72 rounded-2xl shadow-2xl overflow-hidden border border-white/10 flex items-center justify-center bg-gradient-to-tr from-pink-600/30 to-purple-600/30">
-        <div id="full-cover" class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-compact-disc text-6xl text-pink-400/70"></i></div>
-        <canvas id="visualizer-canvas" class="absolute inset-0 w-full h-full opacity-80 pointer-events-none hidden"></canvas>
-      </div>
-    </div>
-    <div class="space-y-1 mb-2">
-      <div class="flex items-center justify-between">
-        <div class="overflow-hidden pr-3">
-          <h2 id="full-title" class="text-lg font-extrabold text-white truncate">Kein Titel</h2>
-          <p id="full-artist" class="text-xs font-medium text-pink-500 truncate mt-0.5">Künstler</p>
-        </div>
-        <button id="full-fav-btn" onclick="toggleCurrentFavorite()" class="p-2 text-slate-500 hover:text-pink-500 text-lg"><i class="fa-regular fa-heart"></i></button>
-      </div>
-    </div>
-    <div class="space-y-1.5">
-      <input type="range" id="seek-bar" value="0" min="0" max="100" class="w-full">
-      <div class="flex justify-between text-[11px] font-semibold text-slate-400">
-        <span id="current-time">0:00</span><span id="total-duration">0:00</span>
-      </div>
-    </div>
-    <div class="flex items-center justify-between px-2 py-2">
-      <button onclick="playPrevSong()" class="text-white hover:text-pink-500 p-2 text-2xl"><i class="fa-solid fa-backward-step"></i></button>
-      <button id="full-play-btn" onclick="togglePlayPause()" class="w-14 h-14 rounded-full bg-pink-600 text-white flex items-center justify-center text-xl shadow-xl"><i class="fa-solid fa-play"></i></button>
-      <button onclick="playNextSong()" class="text-white hover:text-pink-500 p-2 text-2xl"><i class="fa-solid fa-forward-step"></i></button>
-    </div>
-  </div>
-
-
-  <!-- ==================== FIXED BOTTOM NAVIGATION BAR ==================== -->
-  <nav class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto glass-panel border-t border-white/10 px-4 py-2.5 flex items-center justify-around z-40 shadow-2xl">
-    <button onclick="switchBottomNav('aimusic')" id="bottom-nav-aimusic" class="flex flex-col items-center text-ios-pink space-y-1 transition cursor-pointer">
-      <i class="fa-solid fa-music text-base"></i>
-      <span class="text-[10px] font-semibold">KI-Musik</span>
-    </button>
-    <button onclick="switchBottomNav('aicover')" id="bottom-nav-aicover" class="flex flex-col items-center text-ios-textMuted hover:text-white space-y-1 transition cursor-pointer">
-      <i class="fa-solid fa-waveform-lines text-base"></i>
-      <span class="text-[10px] font-semibold">KI-Cover</span>
-    </button>
-    <button onclick="switchBottomNav('aivideo')" id="bottom-nav-aivideo" class="flex flex-col items-center text-ios-textMuted hover:text-white space-y-1 transition cursor-pointer">
-      <i class="fa-solid fa-video text-base"></i>
-      <span class="text-[10px] font-semibold">KI-Video</span>
-    </button>
-    <button onclick="switchBottomNav('back')" id="bottom-nav-back" class="flex flex-col items-center text-ios-textMuted hover:text-white space-y-1 transition cursor-pointer">
-      <i class="fa-solid fa-rotate-left text-base"></i>
-      <span class="text-[10px] font-semibold">Rückwärts</span>
-    </button>
-    <button onclick="switchBottomNav('library')" id="bottom-nav-library" class="flex flex-col items-center text-ios-textMuted hover:text-white space-y-1 transition cursor-pointer">
-      <i class="fa-solid fa-book-open text-base"></i>
-      <span class="text-[10px] font-semibold">Bibliothek</span>
-    </button>
-  </nav>
-
-  <!-- Toast Notification Box -->
-  <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-white/15 px-4 py-2 rounded-full shadow-2xl text-xs text-white opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-2">
-    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
-    <span id="toast-msg">Nachricht</span>
-  </div>
-
-  <script>
-    /* ========================================================
-       MASTER APP SWITCHER LOGIC
-       ======================================================== */
-    function switchApp(appName) {
-      document.getElementById('app-welcome').classList.add('hidden');
-      document.getElementById('app-converter').classList.add('hidden');
-      document.getElementById('app-aimusic').classList.add('hidden');
-      document.getElementById('app-imusic').classList.add('hidden');
-
-      if (appName === 'welcome') document.getElementById('app-welcome').classList.remove('hidden');
-      else if (appName === 'converter') document.getElementById('app-converter').classList.remove('hidden');
-      else if (appName === 'aimusic') document.getElementById('app-aimusic').classList.remove('hidden');
-      else if (appName === 'imusic') {
-        document.getElementById('app-imusic').classList.remove('hidden');
-        renderImusicSongs();
-      }
-    }
-
-    function switchBottomNav(tab) {
-      if (tab === 'library') switchApp('imusic');
-      else {
-        switchApp('aimusic');
-        showToast(`${tab} Modus aktiv`);
-      }
-    }
-
-    function showToast(msg, iconClass = "fa-solid fa-circle-check text-emerald-400") {
-      const toast = document.getElementById('toast');
-      document.getElementById('toast-msg').innerText = msg;
-      document.getElementById('toast-icon').className = iconClass;
-      toast.style.opacity = '1';
-      setTimeout(() => { toast.style.opacity = '0'; }, 3000);
-    }
-
-    /* ========================================================
-       AI MUSIC CREATOR LOGIC
-       ======================================================== */
-    let selectedGenre = 'Synthwave', selectedVoice = 'male', selectedRecType = 'Studio';
-    let generatedAiSongBlob = null, generatedAiSongName = '';
-    let aiAudioPlayer = document.getElementById('ai-audio-player');
-
-    function setCreationMode(mode) {
-      document.getElementById('mode-desc-btn').className = mode === 'description' ? "flex-1 py-2 rounded-full text-xs font-semibold text-white bg-white/15 shadow transition cursor-pointer flex items-center justify-center gap-1.5" : "flex-1 py-2 rounded-full text-xs font-semibold text-ios-textMuted hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5";
-      document.getElementById('mode-lyrics-btn').className = mode === 'lyrics' ? "flex-1 py-2 rounded-full text-xs font-semibold text-white bg-white/15 shadow transition cursor-pointer flex items-center justify-center gap-1.5" : "flex-1 py-2 rounded-full text-xs font-semibold text-ios-textMuted hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5";
-      showToast(mode === 'lyrics' ? "Songtext-Modus aktiviert" : "Songbeschreibung aktiviert");
-    }
-
-    function selectVibe(vibe) {
-      document.querySelectorAll('.vibe-chip').forEach(b => b.className = "vibe-chip px-4 py-2 rounded-full text-xs font-semibold bg-white/10 text-slate-300 border border-white/5");
-      event.currentTarget.className = "vibe-chip px-4 py-2 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/20 shadow";
-      showToast(`Vibe gewählt: ${vibe}`);
-    }
-
-    function openSettingsModal() { document.getElementById('settings-modal').classList.remove('hidden'); }
-    function closeSettingsModal() {
-      document.getElementById('settings-modal').classList.add('hidden');
-      const customTitle = document.getElementById('modal-song-title').value.trim();
-      document.getElementById('active-settings-badge').innerText = `${customTitle ? customTitle + ' • ' : ''}${selectedGenre}, ${selectedVoice === 'male' ? 'Männlich' : 'Weiblich'}, ${selectedRecType}`;
-    }
-
-    function selectGenre(genre) {
-      selectedGenre = genre;
-      document.querySelectorAll('.genre-card').forEach(c => c.style.borderColor = 'transparent');
-      event.currentTarget.style.borderColor = '#bf5af2';
-      showToast(`Genre: ${genre} ausgewählt`);
-    }
-
-    function selectVoiceModal(voice) {
-      selectedVoice = voice;
-      document.getElementById('modal-voice-male').className = voice === 'male' ? "py-3 px-4 rounded-2xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer" : "py-3 px-4 rounded-2xl border border-white/10 bg-ios-cardHover text-slate-400 text-xs font-semibold text-center cursor-pointer";
-      document.getElementById('modal-voice-female').className = voice === 'female' ? "py-3 px-4 rounded-2xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer" : "py-3 px-4 rounded-2xl border border-white/10 bg-ios-cardHover text-slate-400 text-xs font-semibold text-center cursor-pointer";
-    }
-
-    function selectRecordingType(type) {
-      selectedRecType = type;
-      document.getElementById('modal-rec-studio').className = type === 'Studio' ? "py-3 px-4 rounded-2xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer" : "py-3 px-4 rounded-2xl border border-white/10 bg-ios-cardHover text-slate-400 text-xs font-semibold text-center cursor-pointer";
-      document.getElementById('modal-rec-live').className = type === 'Live' ? "py-3 px-4 rounded-2xl border border-purple-500 bg-purple-600/20 text-purple-300 text-xs font-semibold text-center cursor-pointer" : "py-3 px-4 rounded-2xl border border-white/10 bg-ios-cardHover text-slate-400 text-xs font-semibold text-center cursor-pointer";
-    }
-
-    async function generateAiMusic() {
-      const customTitle = document.getElementById('modal-song-title').value.trim();
-      let title = customTitle || `AI ${selectedGenre} Track`;
-
-      document.getElementById('ai-loading-box').classList.remove('hidden');
-      document.getElementById('ai-result-box').classList.add('hidden');
-
-      setTimeout(() => {
-        document.getElementById('ai-loading-box').classList.add('hidden');
-        document.getElementById('ai-result-box').classList.remove('hidden');
-        document.getElementById('ai-result-title').innerText = title;
-        generatedAiSongName = title.replace(/[^a-zA-Z0-9-_]/g, '_') + '.mp3';
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
-        const buffer = audioCtx.createBuffer(2, audioCtx.sampleRate * 15, audioCtx.sampleRate);
-        const left = buffer.getChannelData(0), right = buffer.getChannelData(1);
-        for (let i = 0; i < buffer.length; i++) {
-          let t = i / audioCtx.sampleRate;
-          let sample = Math.sin(2 * Math.PI * 110 * t) * 0.3 * Math.max(1 - t/15, 0);
-          left[i] = sample; right[i] = sample;
-        }
-
-        const mp3encoder = new lamejs.Mp3Encoder(2, audioCtx.sampleRate, 128);
-        let mp3Data = [];
-        const left16 = new Int16Array(left.length), right16 = new Int16Array(right.length);
-        for (let i = 0; i < left.length; i++) { left16[i] = left[i] * 32767; right16[i] = right[i] * 32767; }
-        for (let i = 0; i < left16.length; i += 1152) {
-          const mp3buf = mp3encoder.encodeBuffer(left16.subarray(i, i + 1152), right16.subarray(i, i + 1152));
-          if (mp3buf.length > 0) mp3Data.push(mp3buf);
-        }
-        const endBuf = mp3encoder.flush();
-        if (endBuf.length > 0) mp3Data.push(endBuf);
-
-        generatedAiSongBlob = new Blob(mp3Data, { type: 'audio/mp3' });
-        aiAudioPlayer.src = URL.createObjectURL(generatedAiSongBlob);
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 flex flex-col space-y-6">
         
-        const canvas = document.getElementById('ai-waveform-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = canvas.parentElement.clientWidth || 300; canvas.height = 56;
-        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#bf5af2';
-        for (let i = 0; i < 45; i++) ctx.fillRect(i * (canvas.width/45) + 2, 10, (canvas.width/45) - 3, Math.random() * 35 + 5);
+        <!-- Mode Switcher Tabs -->
+        <div class="flex bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-inner max-w-md mx-auto w-full">
+            <button onclick="switchMode('description')" id="modeDescBtn" class="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-indigo-600 text-white shadow-md">
+                <i class="fa-solid fa-sliders text-xs"></i>
+                <span>Songbeschreibung</span>
+            </button>
+            <button onclick="switchMode('lyrics')" id="modeLyricsBtn" class="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-pen-nib text-xs"></i>
+                <span>Songtext-Modus</span>
+            </button>
+        </div>
 
-        const a = document.createElement('a');
-        a.href = aiAudioPlayer.src; a.download = generatedAiSongName;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        showToast("Song erstellt & MP3 automatisch geladen!");
-      }, 2000);
-    }
-
-    function toggleAiPlay() { if (aiAudioPlayer.paused) aiAudioPlayer.play(); else aiAudioPlayer.pause(); }
-    function downloadAiSong() { if (generatedAiSongBlob) { const a = document.createElement('a'); a.href = URL.createObjectURL(generatedAiSongBlob); a.download = generatedAiSongName; a.click(); } }
-
-    function sendAiSongToImusic() {
-      if (!generatedAiSongBlob) return;
-      imusicSongs.unshift({
-        id: 'ai_' + Date.now(),
-        title: document.getElementById('ai-result-title').innerText,
-        artist: 'AI Studio (' + selectedGenre + ')',
-        url: URL.createObjectURL(generatedAiSongBlob),
-        duration: '0:15',
-        favorite: true
-      });
-      showToast("Zu iMusic Library hinzugefügt!");
-      switchApp('imusic');
-    }
-
-    /* ========================================================
-       AUDIOFORGE CONVERTER LOGIC
-       ======================================================== */
-    let selectedFiles = [];
-    let generatedBlob = null;
-    let generatedFileName = '';
-    const fileInputSingle = document.getElementById('file-input-single');
-
-    fileInputSingle.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) {
-        selectedFiles = Array.from(e.target.files);
-        const file = selectedFiles[0];
-        document.getElementById('file-name').innerText = file.name;
-        document.getElementById('custom-filename-input').value = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-        document.getElementById('video-preview').src = URL.createObjectURL(file);
-        document.getElementById('preview-box').classList.remove('hidden');
-        document.getElementById('convert-btn').disabled = false;
-      }
-    });
-
-    document.getElementById('convert-btn').addEventListener('click', async () => {
-      if (selectedFiles.length === 0) return;
-      document.getElementById('progress-box').classList.remove('hidden');
-      document.getElementById('result-box').classList.add('hidden');
-      setTimeout(() => {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
-        const buffer = audioCtx.createBuffer(2, audioCtx.sampleRate * 10, audioCtx.sampleRate);
-        const left = buffer.getChannelData(0), right = buffer.getChannelData(1);
-        for (let i = 0; i < buffer.length; i++) {
-          let t = i / audioCtx.sampleRate;
-          let sample = Math.sin(2 * Math.PI * 220 * t) * 0.3;
-          left[i] = sample; right[i] = sample;
-        }
-        const mp3encoder = new lamejs.Mp3Encoder(2, audioCtx.sampleRate, 128);
-        let mp3Data = [];
-        const left16 = new Int16Array(left.length), right16 = new Int16Array(right.length);
-        for (let i = 0; i < left.length; i++) { left16[i] = left[i] * 32767; right16[i] = right[i] * 32767; }
-        for (let i = 0; i < left16.length; i += 1152) {
-          const mp3buf = mp3encoder.encodeBuffer(left16.subarray(i, i + 1152), right16.subarray(i, i + 1152));
-          if (mp3buf.length > 0) mp3Data.push(mp3buf);
-        }
-        const endBuf = mp3encoder.flush();
-        if (endBuf.length > 0) mp3Data.push(endBuf);
-
-        generatedBlob = new Blob(mp3Data, { type: 'audio/mp3' });
-        generatedFileName = (document.getElementById('custom-filename-input').value.trim() || 'audio') + '.mp3';
-        document.getElementById('progress-box').classList.add('hidden');
-        document.getElementById('result-box').classList.remove('hidden');
-        document.getElementById('result-info').innerText = `${(generatedBlob.size/(1024*1024)).toFixed(2)} MB`;
-        showToast("Audio erfolgreich extrahiert!");
-      }, 1500);
-    });
-
-    document.getElementById('download-btn').addEventListener('click', () => {
-      if (generatedBlob) {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(generatedBlob);
-        a.download = generatedFileName;
-        a.click();
-      }
-    });
-
-    document.getElementById('send-to-imusic-btn').addEventListener('click', () => {
-      if (!generatedBlob) return;
-      imusicSongs.unshift({
-        id: 'conv_' + Date.now(),
-        title: document.getElementById('custom-filename-input').value || 'Extrahiertes Audio',
-        artist: 'AudioForge Studio',
-        url: URL.createObjectURL(generatedBlob),
-        duration: '0:10',
-        favorite: false
-      });
-      showToast("Zu iMusic Library hinzugefügt!");
-      switchApp('imusic');
-    });
-
-    /* ========================================================
-       IMUSIC LIBRARY & PLAYER LOGIC
-       ======================================================== */
-    let imusicSongs = [
-      { id: '1', title: 'Neon Horizon', artist: 'AI Studio', url: 'https://actions.google.com/sounds/v1/ambiences/rain_heavy.ogg', duration: '2:45', favorite: true },
-      { id: '2', title: 'Midnight City Beats', artist: 'AudioForge Studio', url: 'https://actions.google.com/sounds/v1/science_fiction/teleport.ogg', duration: '3:12', favorite: false }
-    ];
-    let currentSongIndex = 0, currentCategory = 'all';
-    let sharedAudioElement = new Audio();
-
-    document.getElementById('imusic-audio-file-input').addEventListener('change', (e) => {
-      Array.from(e.target.files).forEach(file => {
-        imusicSongs.unshift({
-          id: 'imp_' + Date.now(),
-          title: file.name.substring(0, file.name.lastIndexOf('.')) || file.name,
-          artist: 'Lokaler Upload',
-          url: URL.createObjectURL(file),
-          duration: '3:00',
-          favorite: false
-        });
-      });
-      renderImusicSongs();
-      showToast("Songs zu iMusic hinzugefügt!");
-    });
-
-    function renderImusicSongs() {
-      const container = document.getElementById('imusic-songs-container');
-      const emptyState = document.getElementById('imusic-empty-state');
-      container.innerHTML = '';
-      
-      let filtered = currentCategory === 'favorites' ? imusicSongs.filter(s => s.favorite) : imusicSongs;
-      if (filtered.length === 0) {
-        emptyState.classList.remove('hidden');
-        return;
-      }
-      emptyState.classList.add('hidden');
-
-      filtered.forEach((song, idx) => {
-        const div = document.createElement('div');
-        div.className = "glass-card p-3 rounded-2xl flex items-center justify-between cursor-pointer hover:bg-white/15 transition";
-        div.onclick = () => {
-          currentSongIndex = idx;
-          sharedAudioElement.src = song.url;
-          sharedAudioElement.play();
-          document.getElementById('imusic-mini-title').innerText = song.title;
-          document.getElementById('imusic-mini-artist').innerText = song.artist;
-          document.getElementById('full-title').innerText = song.title;
-          document.getElementById('full-artist').innerText = song.artist;
-          showToast(`Wiedergabe: ${song.title}`);
-        };
-        div.innerHTML = `
-          <div class="flex items-center space-x-3 overflow-hidden flex-1 mr-2">
-            <div class="w-11 h-11 rounded-xl bg-pink-600/20 text-pink-400 flex items-center justify-center"><i class="fa-solid fa-music"></i></div>
-            <div class="overflow-hidden flex-1">
-              <h4 class="text-xs font-bold text-white truncate">${song.title}</h4>
-              <p class="text-[10px] text-slate-400 truncate">${song.artist}</p>
+        <!-- Input Area / Editor Box -->
+        <div class="dark-glass rounded-3xl p-5 shadow-2xl relative flex flex-col space-y-4">
+            <div id="inputDescriptionWrapper" class="space-y-2">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Beschreibe deinen Song</label>
+                <textarea id="songPrompt" rows="5" placeholder="z.B. Ein epischen Cyberpunk-Abenteuer im Regen, treibende Synthesizer und emotionale Vocals..." 
+                    class="w-full p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition resize-none"></textarea>
             </div>
-          </div>
-          <span class="text-[10px] text-slate-500 font-mono">${song.duration}</span>
-        `;
-        container.appendChild(div);
-      });
-    }
 
-    function filterImusicCategory(cat) {
-      currentCategory = cat;
-      document.querySelectorAll('.imusic-chip').forEach(b => b.className = "imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-slate-300 whitespace-nowrap");
-      event.currentTarget.className = "imusic-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-pink-600 text-white shadow-md whitespace-nowrap";
-      renderImusicSongs();
-    }
+            <div id="inputLyricsWrapper" class="space-y-2 hidden">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Dein eigener Songtext (Lyrics)</label>
+                    <button onclick="suggestLyrics()" class="text-xs text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1 font-semibold">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Text generieren lassen
+                    </button>
+                </div>
+                <textarea id="songLyricsInput" rows="7" placeholder="[Strophe 1]&#10;Ich laufe durch die Straßen, verloren in der Stadt...&#10;&#10;[Refrain]&#10;Oh, hör den Klang der Nacht..." 
+                    class="w-full p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80 text-sm font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition resize-none"></textarea>
+            </div>
 
-    function togglePlayPause() {
-      if (sharedAudioElement.paused) sharedAudioElement.play();
-      else sharedAudioElement.pause();
-    }
+            <!-- Settings Button Overlay inside card -->
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800/60">
+                <button onclick="openSettingsModal()" class="px-4 py-2.5 bg-slate-900/80 hover:bg-slate-800 rounded-xl border border-slate-700/80 text-xs font-semibold text-slate-300 transition flex items-center space-x-2 shadow-sm">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i>
+                    <span id="settingsButtonLabel">Einstellungen anpassen</span>
+                </button>
+                <div id="activeSettingsSummary" class="text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-xs">
+                    Genre: <span id="summaryGenre" class="text-indigo-300 font-medium">Pop</span> • Stimme: <span id="summaryVoice" class="text-indigo-300 font-medium">Egal</span>
+                </div>
+            </div>
+        </div>
 
-    function playNextSong() {
-      if (imusicSongs.length === 0) return;
-      currentSongIndex = (currentSongIndex + 1) % imusicSongs.length;
-      renderImusicSongs();
-    }
+        <!-- Quick Mood / Genre Tags -->
+        <div class="space-y-2">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Schnell-Stimmungen</span>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="selectQuickMood('Vorschlagen')" class="option-chip px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-semibold text-slate-300 hover:border-indigo-500 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i><span>Vorschlagen</span>
+                </button>
+                <button onclick="selectQuickMood('Lustig')" class="option-chip px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-semibold text-slate-300 hover:border-indigo-500 transition">Lustig</button>
+                <button onclick="selectQuickMood('Glücklich')" class="option-chip px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-semibold text-slate-300 hover:border-indigo-500 transition">Glücklich</button>
+                <button onclick="selectQuickMood('Entspannt')" class="option-chip px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-semibold text-slate-300 hover:border-indigo-500 transition">Entspannt</button>
+                <button onclick="selectQuickMood('Episch')" class="option-chip px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-semibold text-slate-300 hover:border-indigo-500 transition">Episch</button>
+            </div>
+        </div>
 
-    function playPrevSong() {
-      if (imusicSongs.length === 0) return;
-      currentSongIndex = (currentSongIndex - 1 + imusicSongs.length) % imusicSongs.length;
-      renderImusicSongs();
-    }
+        <!-- Main Erstellen Button -->
+        <div>
+            <button onclick="generateFullSong()" id="createBtn" class="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-extrabold text-sm tracking-wide shadow-xl shadow-indigo-500/25 hover:opacity-95 active:scale-[0.99] transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-compact-disc animate-spin-slow"></i>
+                <span>Erstellen</span>
+            </button>
+        </div>
 
-    function openFullPlayer() { document.getElementById('full-player-modal').style.transform = 'translateY(0)'; }
-    function closeFullPlayer() { document.getElementById('full-player-modal').style.transform = 'translateY(100%)'; }
-    function toggleSleepTimerModal() { showToast("Sleep Timer geöffnet"); }
-    function toggleEqModal() { showToast("Equalizer geöffnet"); }
-    function toggleCurrentFavorite() {
-      if (imusicSongs[currentSongIndex]) {
-        imusicSongs[currentSongIndex].favorite = !imusicSongs[currentSongIndex].favorite;
-        showToast("Favoritenstatus aktualisiert");
-      }
-    }
-  </script>
+        <!-- Result / Output Section -->
+        <div id="outputSection" class="hidden dark-glass rounded-3xl p-6 shadow-2xl space-y-4 border border-indigo-500/30">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center">
+                        <i class="fa-solid fa-music text-indigo-400"></i>
+                    </div>
+                    <div>
+                        <h3 id="resTitle" class="font-bold text-base text-white">Song Titel</h3>
+                        <p id="resSubtitle" class="text-xs text-slate-400">Pop • Studio • Weiblich</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="exportResult()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-download text-indigo-400"></i>
+                        <span>Export</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+                <button onclick="toggleAudioPlayback()" id="mainPlayBtn" class="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-600/40 transition">
+                    <i class="fa-solid fa-play text-sm ml-0.5" id="mainPlayIcon"></i>
+                </button>
+                <div class="flex-1 space-y-1.5">
+                    <div class="flex justify-between text-[11px] text-slate-400 font-medium">
+                        <span id="currentTimeLabel">0:00</span>
+                        <span id="totalTimeLabel">0:30</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden cursor-pointer" onclick="seekAudio(event)">
+                        <div id="audioProgressBar" class="bg-gradient-to-r from-indigo-500 to-pink-500 h-full w-0 transition-all duration-100"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Song Lyrics & Concept Display -->
+            <div class="space-y-3 pt-2">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Generierter Liedtext & Konzept</h4>
+                <div id="resLyricsContent" class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 text-xs font-sans text-slate-300 whitespace-pre-wrap max-h-60 overflow-y-auto leading-relaxed"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="glass-modal rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-6 border border-slate-800 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
+                <h3 class="font-extrabold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i> Einstellungen
+                </h3>
+                <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Genre Selection with visual image circles -->
+            <div class="space-y-3">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Genre auswählen <span class="text-[10px] font-normal text-slate-500">(Optional)</span></label>
+                <div class="grid grid-cols-4 sm:grid-cols-5 gap-3 text-center">
+                    <div onclick="setGenre('Klassik')" class="genre-option cursor-pointer group space-y-1.5" data-genre="Klassik">
+                        <div class="w-14 h-14 mx-auto rounded-full overflow-hidden border-2 border-slate-700 group-hover:border-indigo-500 transition shadow-md relative">
+                            <img src="https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=150&auto=format&fit=crop&q=80" alt="Klassik" class="w-full h-full object-cover group-hover:scale-110 transition duration-300" onerror="this.src='https://placehold.co/150x150/1e293b/cbd5e1?text=Class'">
+                        </div>
+                        <span class="text-[11px] font-medium text-slate-300 block">Klassik</span>
+                    </div>
+                    <div onclick="setGenre('Country')" class="genre-option cursor-pointer group space-y-1.5" data-genre="Country">
+                        <div class="w-14 h-14 mx-auto rounded-full overflow-hidden border-2 border-slate-700 group-hover:border-indigo-500 transition shadow-md relative">
+                            <img src="https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=150&auto=format&fit=crop&q=80" alt="Country" class="w-full h-full object-cover group-hover:scale-110 transition duration-300" onerror="this.src='https://placehold.co/150x150/1e293b/cbd5e1?text=Country'">
+                        </div>
+                        <span class="text-[11px] font-medium text-slate-300 block">Country</span>
+                    </div>
+                    <div onclick="setGenre('Pop')" class="genre-option cursor-pointer group space-y-1.5 selected" data-genre="Pop">
+                        <div class="w-14 h-14 mx-auto rounded-full overflow-hidden border-2 border-indigo-500 group-hover:border-indigo-400 transition shadow-md relative">
+                            <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=150&auto=format&fit=crop&q=80" alt="Pop" class="w-full h-full object-cover group-hover:scale-110 transition duration-300" onerror="this.src='https://placehold.co/150x150/1e293b/cbd5e1?text=Pop'">
+                        </div>
+                        <span class="text-[11px] font-medium text-white block">Pop</span>
+                    </div>
+                    <div onclick="setGenre('Jazz')" class="genre-option cursor-pointer group space-y-1.5" data-genre="Jazz">
+                        <div class="w-14 h-14 mx-auto rounded-full overflow-hidden border-2 border-slate-700 group-hover:border-indigo-500 transition shadow-md relative">
+                            <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150&auto=format&fit=crop&q=80" alt="Jazz" class="w-full h-full object-cover group-hover:scale-110 transition duration-300" onerror="this.src='https://placehold.co/150x150/1e293b/cbd5e1?text=Jazz'">
+                        </div>
+                        <span class="text-[11px] font-medium text-slate-300 block">Jazz</span>
+                    </div>
+                    <div onclick="setGenre('Rock')" class="genre-option cursor-pointer group space-y-1.5" data-genre="Rock">
+                        <div class="w-14 h-14 mx-auto rounded-full overflow-hidden border-2 border-slate-700 group-hover:border-indigo-500 transition shadow-md relative">
+                            <img src="https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=150&auto=format&fit=crop&q=80" alt="Rock" class="w-full h-full object-cover group-hover:scale-110 transition duration-300" onerror="this.src='https://placehold.co/150x150/1e293b/cbd5e1?text=Rock'">
+                        </div>
+                        <span class="text-[11px] font-medium text-slate-300 block">Rock</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Title Input -->
+            <div class="space-y-2">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Titel <span class="text-[10px] font-normal text-slate-500">(Optional)</span></label>
+                <input type="text" id="settingSongTitle" placeholder="Gib deinen Titel ein" class="w-full px-4 py-3 bg-slate-900 rounded-2xl border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+            </div>
+
+            <!-- Voice Selection -->
+            <div class="space-y-2">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Stimme auswählen <span class="text-[10px] font-normal text-slate-500">(Optional)</span></label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setVoice('Männlich')" id="voiceMaleBtn" class="voice-btn py-3 px-4 rounded-2xl border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 hover:border-indigo-500 transition">Männlich</button>
+                    <button onclick="setVoice('Weiblich')" id="voiceFemaleBtn" class="voice-btn py-3 px-4 rounded-2xl border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 hover:border-indigo-500 transition">Weiblich</button>
+                </div>
+            </div>
+
+            <!-- Recording Type -->
+            <div class="space-y-2">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Aufnahmeart auswählen <span class="text-[10px] font-normal text-slate-500">(Optional)</span></label>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setRecordingType('Studio')" id="recStudioBtn" class="rec-btn py-3 px-4 rounded-2xl border border-indigo-500 bg-indigo-600/20 text-xs font-bold text-white transition">Studio</button>
+                    <button onclick="setRecordingType('Live (Konzert)')" id="recLiveBtn" class="rec-btn py-3 px-4 rounded-2xl border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 hover:border-indigo-500 transition">Live (Konzert)</button>
+                </div>
+            </div>
+
+            <!-- Apply Button -->
+            <div class="pt-2">
+                <button onclick="applySettings()" class="w-full py-3.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-950 font-extrabold text-sm shadow-lg transition">Anwenden</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Modal -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl max-w-md w-full p-6 border border-slate-700 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-key text-indigo-400"></i> API Schlüssel konfigurieren
+                </h3>
+                <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400">Geben Sie Ihren Gemini API-Schlüssel ein, um echte generative KI-Modelle für die Song- und Texterstellung zu verwenden.</p>
+            <input type="password" id="customApiKeyInput" placeholder="AIzaSy..." class="w-full px-4 py-3 bg-slate-900 rounded-2xl border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500">
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeApiKeyModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl text-slate-300 transition">Abbrechen</button>
+                <button onclick="saveApiKey()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold rounded-xl text-white transition">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-lg border-t border-slate-800 z-30 py-2">
+        <div class="max-w-md mx-auto flex justify-around items-center px-2">
+            <button onclick="switchNavTab('music')" id="navMusicBtn" class="flex flex-col items-center space-y-1 text-indigo-400 transition">
+                <i class="fa-solid fa-music text-base"></i>
+                <span class="text-[10px] font-semibold">KI-Musik</span>
+            </button>
+            <button onclick="switchNavTab('cover')" id="navCoverBtn" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-compact-disc text-base"></i>
+                <span class="text-[10px] font-semibold">KI-Cover</span>
+            </button>
+            <button onclick="switchNavTab('video')" id="navVideoBtn" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-video text-base"></i>
+                <span class="text-[10px] font-semibold">KI-Video</span>
+            </button>
+            <button onclick="switchNavTab('reverse')" id="navReverseBtn" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-backward text-base"></i>
+                <span class="text-[10px] font-semibold">Rückwärts</span>
+            </button>
+            <button onclick="switchNavTab('library')" id="navLibraryBtn" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-book-open text-base"></i>
+                <span class="text-[10px] font-semibold">Bibliothek</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        let currentApiKey = "";
+        let currentMode = 'description'; // 'description' or 'lyrics'
+        let selectedGenre = 'Pop';
+        let selectedVoice = 'Egal';
+        let selectedRecordingType = 'Studio';
+        let customSongTitle = '';
+        let isPlayingAudio = false;
+        let audioProgressInterval = null;
+        let currentSongData = null;
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const descBtn = document.getElementById('modeDescBtn');
+            const lyricsBtn = document.getElementById('modeLyricsBtn');
+            const descWrapper = document.getElementById('inputDescriptionWrapper');
+            const lyricsWrapper = document.getElementById('inputLyricsWrapper');
+
+            if (mode === 'description') {
+                descBtn.className = "flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-indigo-600 text-white shadow-md";
+                lyricsBtn.className = "flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 text-slate-400 hover:text-white";
+                descWrapper.classList.remove('hidden');
+                lyricsWrapper.classList.add('hidden');
+            } else {
+                lyricsBtn.className = "flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-indigo-600 text-white shadow-md";
+                descBtn.className = "flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 text-slate-400 hover:text-white";
+                lyricsWrapper.classList.remove('hidden');
+                descWrapper.classList.add('hidden');
+            }
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('hidden');
+            document.getElementById('settingSongTitle').value = customSongTitle;
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function setGenre(genre) {
+            selectedGenre = genre;
+            document.querySelectorAll('.genre-option').forEach(el => {
+                const imgBox = el.querySelector('div');
+                const titleText = el.querySelector('span');
+                if (el.getAttribute('data-genre') === genre) {
+                    imgBox.classList.add('border-indigo-500');
+                    imgBox.classList.remove('border-slate-700');
+                    titleText.classList.add('text-white');
+                    titleText.classList.remove('text-slate-300');
+                } else {
+                    imgBox.classList.remove('border-indigo-500');
+                    imgBox.classList.add('border-slate-700');
+                    titleText.classList.remove('text-white');
+                    titleText.classList.add('text-slate-300');
+                }
+            });
+        }
+
+        function setVoice(voice) {
+            selectedVoice = voice;
+            const maleBtn = document.getElementById('voiceMaleBtn');
+            const femaleBtn = document.getElementById('voiceFemaleBtn');
+            if (voice === 'Männlich') {
+                maleBtn.className = "voice-btn py-3 px-4 rounded-2xl border border-indigo-500 bg-indigo-600/20 text-xs font-bold text-white transition";
+                femaleBtn.className = "voice-btn py-3 px-4 rounded-2xl border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 transition";
+            } else {
+                femaleBtn.className = "voice-btn py-3 px-4 rounded-2xl border border-indigo-500 bg-indigo-600/20 text-xs font-bold text-white transition";
+                maleBtn.className = "voice-btn py-3 px-4 rounded-2xl border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 transition";
+            }
+        }
+
+        function setRecordingType(type) {
+            selectedRecordingType = type;
+            const studioBtn = document.getElementById('recStudioBtn');
+            const liveBtn = document.getElementById('recLiveBtn');
+            if (type === 'Studio') {
+                studioBtn.className = "rec-btn py-3 px-4 rounded-2xl border border-indigo-500 bg-indigo-600/20 text-xs font-bold text-white transition";
+                liveBtn.className = "rec-btn py-3 px-4 rounded-2xl border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 transition";
+            } else {
+                liveBtn.className = "rec-btn py-3 px-4 rounded-2xl border border-indigo-500 bg-indigo-600/20 text-xs font-bold text-white transition";
+                studioBtn.className = "rec-btn py-3 px-4 rounded-2xl border border-slate-800 bg-slate-900 text-xs font-bold text-slate-300 transition";
+            }
+        }
+
+        function applySettings() {
+            customSongTitle = document.getElementById('settingSongTitle').value.trim();
+            document.getElementById('summaryGenre').innerText = selectedGenre;
+            document.getElementById('summaryVoice').innerText = selectedVoice;
+            closeSettingsModal();
+        }
+
+        function selectQuickMood(mood) {
+            if (mood === 'Vorschlagen') {
+                document.getElementById('songPrompt').value = "Ein emotionaler Filmsoundtrack mit epischen Streichern und einer kraftvollen Gesangsmelodie.";
+            } else {
+                const currentVal = document.getElementById('songPrompt').value;
+                document.getElementById('songPrompt').value = currentVal ? `${currentVal}, Stimmung: ${mood}` : `Ein ${mood.toLowerCase()}er Song im Genre ${selectedGenre}.`;
+            }
+        }
+
+        function openApiKeyModal() {
+            document.getElementById('customApiKeyInput').value = currentApiKey;
+            document.getElementById('apiKeyModal').classList.remove('hidden');
+        }
+
+        function closeApiKeyModal() {
+            document.getElementById('apiKeyModal').classList.add('hidden');
+        }
+
+        function saveApiKey() {
+            currentApiKey = document.getElementById('customApiKeyInput').value.trim();
+            closeApiKeyModal();
+        }
+
+        async function suggestLyrics() {
+            document.getElementById('songLyricsInput').value = `[Strophe 1]\nIch laufe durch die Straßen, verloren in der Stadt,\nsuche nach dem Funken, den die Nacht mir geben hat.\n\n[Refrain]\nOoh, wir brennen wie das Neonlicht,\nin diesem Augenblick, der niemals bricht!`;
+        }
+
+        async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    if (response.status === 429 && retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchWithRetry(url, options, retries - 1, delay * 2);
+                    }
+                    throw new Error(`API Fehler: ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+
+        async function generateFullSong() {
+            const promptText = currentMode === 'description' 
+                ? (document.getElementById('songPrompt').value.trim() || "Ein moderner Radio-Hit über Freiheit und Sommernächte.")
+                : (document.getElementById('songLyricsInput').value.trim() || "[Strophe 1]\nMein eigener Text...");
+
+            const createBtn = document.getElementById('createBtn');
+            createBtn.disabled = true;
+            createBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Komponiere Song...</span>`;
+
+            const systemInstruction = "Du bist ein professioneller Musikproduzent und KI-Komponist. Generiere basierend auf den Einstellungen einen vollständigen Song inklusive Titel, Konzept und ausgearbeitetem Text. Antworte als JSON mit den Feldern: 'title', 'concept', 'lyrics'.";
+            const userContent = `Modus: ${currentMode}\nGenre: ${selectedGenre}\nStimme: ${selectedVoice}\nAufnahmeart: ${selectedRecordingType}\nBenutzer-Vorgabe:\n${promptText}`;
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: userContent }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            title: { type: "STRING" },
+                            concept: { type: "STRING" },
+                            lyrics: { type: "STRING" }
+                        },
+                        propertyOrdering: ["title", "concept", "lyrics"]
+                    }
+                }
+            };
+
+            try {
+                const data = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const candidate = data.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const parsed = JSON.parse(candidate.content.parts[0].text);
+                    currentSongData = {
+                        title: customSongTitle || parsed.title || "Mein KI-Song",
+                        concept: parsed.concept || `Genre: ${selectedGenre} | Aufnahme: ${selectedRecordingType}`,
+                        lyrics: parsed.lyrics || promptText,
+                        genre: selectedGenre,
+                        voice: selectedVoice,
+                        recordingType: selectedRecordingType
+                    };
+                } else {
+                    throw new Error("Invalid response");
+                }
+            } catch (e) {
+                console.log("Using fallback generation:", e);
+                currentSongData = {
+                    title: customSongTitle || `Neon ${selectedGenre} Anthem`,
+                    concept: `Genre: ${selectedGenre} | Stimme: ${selectedVoice} | Aufnahme: ${selectedRecordingType}. Dynamische Produktion mit viel Atmosphäre.`,
+                    lyrics: currentMode === 'lyrics' ? promptText : `[Strophe 1]\nIm Takt der Musik, die durch die Boxen schlägt,\nist es die KI, die uns heute trägt.\n\n[Refrain]\nHör den Sound, der niemals verweht,\nweil die Zukunft jetzt beginnt und versteht!`,
+                    genre: selectedGenre,
+                    voice: selectedVoice,
+                    recordingType: selectedRecordingType
+                };
+            } finally {
+                createBtn.disabled = false;
+                createBtn.innerHTML = `<i class="fa-solid fa-compact-disc"></i><span>Erstellen</span>`;
+                renderResult(currentSongData);
+            }
+        }
+
+        function renderResult(song) {
+            document.getElementById('outputSection').classList.remove('hidden');
+            document.getElementById('resTitle').innerText = song.title;
+            document.getElementById('resSubtitle').innerText = `${song.genre} • ${song.recordingType} • ${song.voice}`;
+            document.getElementById('resLyricsContent').innerText = `[KONZEPT]\n${song.concept}\n\n[LIEDTEXT]\n${song.lyrics}`;
+            document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleAudioPlayback() {
+            const btn = document.getElementById('mainPlayBtn');
+            const icon = document.getElementById('mainPlayIcon');
+            const progressBar = document.getElementById('audioProgressBar');
+            const timeLabel = document.getElementById('currentTimeLabel');
+
+            if (!isPlayingAudio) {
+                isPlayingAudio = true;
+                icon.className = "fa-solid fa-pause text-sm";
+                btn.classList.add('bg-pink-600');
+                btn.classList.remove('bg-indigo-600');
+
+                // Synthesizer simulation
+                playSynthTone();
+                let progress = 0;
+                audioProgressInterval = setInterval(() => {
+                    progress += 1;
+                    if (progress > 30) {
+                        stopAudioPlayback();
+                        return;
+                    }
+                    progressBar.style.width = `${(progress / 30) * 100}%`;
+                    timeLabel.innerText = `0:${progress < 10 ? '0' + progress : progress}`;
+                }, 1000);
+            } else {
+                stopAudioPlayback();
+            }
+        }
+
+        function stopAudioPlayback() {
+            isPlayingAudio = false;
+            const btn = document.getElementById('mainPlayBtn');
+            const icon = document.getElementById('mainPlayIcon');
+            icon.className = "fa-solid fa-play text-sm ml-0.5";
+            btn.classList.remove('bg-pink-600');
+            btn.classList.add('bg-indigo-600');
+            if (audioProgressInterval) {
+                clearInterval(audioProgressInterval);
+                audioProgressInterval = null;
+            }
+        }
+
+        function playSynthTone() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [330, 392, 440, 523, 587];
+                let count = 0;
+                const interval = setInterval(() => {
+                    if (!isPlayingAudio || count > 6) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = notes[count % notes.length];
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                    count++;
+                }, 400);
+            } catch (e) {
+                console.log("AudioContext blocked");
+            }
+        }
+
+        function seekAudio(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const width = rect.width;
+            const percentage = clickX / width;
+            document.getElementById('audioProgressBar').style.width = `${percentage * 100}%`;
+            const seconds = Math.floor(percentage * 30);
+            document.getElementById('currentTimeLabel').innerText = `0:${seconds < 10 ? '0' + seconds : seconds}`;
+        }
+
+        function exportResult() {
+            if (!currentSongData) return;
+            const text = `Titel: ${currentSongData.title}\nGenre: ${currentSongData.genre}\nStimme: ${currentSongData.voice}\nAufnahmeart: ${currentSongData.recordingType}\n\nKonzept:\n${currentSongData.concept}\n\nLiedtext:\n${currentSongData.lyrics}`;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentSongData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function switchNavTab(tab) {
+            ['music', 'cover', 'video', 'reverse', 'library'].forEach(t => {
+                const btn = document.getElementById(`nav${t.charAt(0).toUpperCase() + t.slice(1)}Btn`);
+                if (btn) btn.className = "flex flex-col items-center space-y-1 text-slate-400 hover:text-white transition";
+            });
+            const activeBtn = document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}Btn`);
+            if (activeBtn) activeBtn.className = "flex flex-col items-center space-y-1 text-indigo-400 transition";
+            
+            if (tab !== 'music') {
+                showToast(`Modus "${tab.toUpperCase()}" in dieser Version simuliert.`);
+            }
+        }
+
+        function showToast(msg) {
+            const div = document.createElement('div');
+            div.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl border border-slate-700 shadow-2xl z-50 animate-bounce";
+            div.innerText = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 2500);
+        }
+    </script>
 </body>
 </html>
