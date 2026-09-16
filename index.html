@@ -27,6 +27,7 @@
         @keyframes pulse-glow {
             0%, 100% { box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); }
             50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.8); }
+        }
         .glow-effect { animation: pulse-glow 3s infinite; }
     </style>
 </head>
@@ -72,13 +73,11 @@
                 <p class="text-sm text-slate-400 mb-6">Beschreibe deine Idee oder wähle erweiterte Parameter für deinen Hit.</p>
 
                 <div class="space-y-5">
-                    <!-- Prompt Eingabe -->
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-2">Song-Beschreibung & Prompt</label>
-                        <textarea x-model="prompt" rows="3" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3.5 text-sm text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none resize-none" placeholder="Z.B. Ein energiegeladener Cyberpunk-Hyperpop-Song über künstliche Intelligenz, mit schnellen Drums und glitzernden Synth-Arpeggios..."></textarea>
+                        <textarea x-model="prompt" rows="3" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3.5 text-sm text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none resize-none" placeholder="Z.B. Ein energiegeladener Cyberpunk-Hyperpop-Song über künstliche Intelligenz..."></textarea>
                     </div>
 
-                    <!-- Lyrics Modus (Custom vs Auto) -->
                     <div>
                         <div class="flex justify-between items-center mb-2">
                             <label class="text-sm font-medium text-slate-300">Songtext (Lyrics)</label>
@@ -94,7 +93,6 @@
                         </template>
                     </div>
 
-                    <!-- Grid: Genre & Stimmung -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-2">Genre</label>
@@ -113,7 +111,6 @@
                         </div>
                     </div>
 
-                    <!-- Erweiterte Optionen Toggle -->
                     <div class="pt-2">
                         <label class="flex items-center space-x-3 cursor-pointer">
                             <input type="checkbox" x-model="instrumentalOnly" class="rounded bg-slate-950 border-slate-700 text-pink-500 focus:ring-pink-500 w-4 h-4">
@@ -121,7 +118,6 @@
                         </label>
                     </div>
 
-                    <!-- Generieren Button -->
                     <button @click="generateSong()" :disabled="isGenerating || !prompt" class="w-full py-4 bg-gradient-to-r from-pink-600 to-violet-600 hover:from-pink-500 hover:to-violet-500 disabled:opacity-50 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center space-x-2">
                         <template x-if="isGenerating">
                             <div class="flex items-center space-x-2">
@@ -141,7 +137,6 @@
 
             <!-- Rechte Spalte: Output & Player -->
             <div class="lg:col-span-5 flex flex-col space-y-6">
-                <!-- Aktueller Song Card -->
                 <div class="bg-card border border-slate-800/80 rounded-2xl p-6 shadow-xl flex-1 flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-4">
@@ -152,7 +147,6 @@
                             <span class="text-xs bg-pink-500/10 text-pink-400 border border-pink-500/20 px-2.5 py-1 rounded-full font-semibold" x-text="currentSong.genre"></span>
                         </div>
 
-                        <!-- Cover Art & Info -->
                         <div class="relative group aspect-square rounded-xl overflow-hidden bg-slate-950 mb-4 border border-slate-800 flex items-center justify-center">
                             <template x-if="currentSong.ready">
                                 <div class="absolute inset-0 bg-gradient-to-tr from-pink-600/40 to-violet-600/40 flex flex-col items-center justify-center p-6 text-center">
@@ -173,7 +167,6 @@
                     <!-- Player Controls -->
                     <template x-if="currentSong.ready">
                         <div class="space-y-4">
-                            <!-- Wellenform Simulation -->
                             <div class="flex items-center space-x-1 h-8 bg-slate-950 px-3 rounded-lg border border-slate-800">
                                 <template x-for="i in 30">
                                     <div class="flex-1 bg-pink-500/60 rounded-full transition-all" :style="'height: ' + (Math.sin(i) * 50 + 50) + '%'"></div>
@@ -181,18 +174,20 @@
                             </div>
 
                             <div class="flex items-center justify-between">
-                                <button @click="isPlaying = !isPlaying" class="w-12 h-12 bg-white text-slate-950 rounded-full flex items-center justify-center hover:scale-105 transition shadow-lg">
+                                <button @click="togglePlay()" class="w-12 h-12 bg-white text-slate-950 rounded-full flex items-center justify-center hover:scale-105 transition shadow-lg">
                                     <i :data-lucide="isPlaying ? 'pause' : 'play'" class="w-5 h-5 fill-slate-950"></i>
                                 </button>
                                 <div class="text-xs text-slate-400">
-                                    <span>0:00</span> / <span x-text="currentSong.duration"></span>
+                                    <span>Bereit zum Download</span>
                                 </div>
                                 <div class="flex space-x-2">
-                                    <button @click="alert('MP3 Download gestartet!')" title="MP3 Download" class="p-2.5 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition">
-                                        <i data-lucide="download" class="w-4 h-4 text-slate-300"></i>
+                                    <button @click="downloadMP3()" title="MP3 Download" class="p-2.5 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition flex items-center space-x-1 text-xs">
+                                        <i data-lucide="download" class="w-4 h-4 text-pink-400"></i>
+                                        <span>MP3</span>
                                     </button>
-                                    <button @click="alert('Stems (Einzelspuren) exportiert!')" title="Stems exportieren" class="p-2.5 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition">
-                                        <i data-lucide="layers" class="w-4 h-4 text-slate-300"></i>
+                                    <button @click="downloadStems()" title="Stems exportieren" class="p-2.5 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition flex items-center space-x-1 text-xs">
+                                        <i data-lucide="layers" class="w-4 h-4 text-violet-400"></i>
+                                        <span>Stems</span>
                                     </button>
                                 </div>
                             </div>
@@ -204,13 +199,10 @@
 
         <!-- TAB 2: COMMUNITY FEED -->
         <div x-show="activeTab === 'community'" class="space-y-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold">Community Top Hits</h2>
-                    <p class="text-sm text-slate-400">Entdecke, like und streame von anderen Nutzern generierte Tracks.</p>
-                </div>
+            <div>
+                <h2 class="text-2xl font-bold">Community Top Hits</h2>
+                <p class="text-sm text-slate-400">Entdecke, like und streame von anderen Nutzern generierte Tracks.</p>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <template x-for="track in communityTracks">
                     <div class="bg-card border border-slate-800 rounded-2xl p-5 hover:border-pink-500/50 transition shadow-lg flex flex-col justify-between">
@@ -229,7 +221,7 @@
                                 <i data-lucide="heart" class="w-4 h-4 fill-pink-500/20"></i>
                                 <span x-text="track.likes"></span>
                             </button>
-                            <button @click="alert('spiele Track ab...')" class="p-2 bg-slate-900 hover:bg-slate-800 rounded-lg border border-slate-800">
+                            <button @click="alert('Stream gestartet!')" class="p-2 bg-slate-900 hover:bg-slate-800 rounded-lg border border-slate-800">
                                 <i data-lucide="play" class="w-3.5 h-3.5 text-white fill-white"></i>
                             </button>
                         </div>
@@ -244,7 +236,6 @@
                 <h2 class="text-3xl font-black mb-2">Wähle dein Creator-Paket</h2>
                 <p class="text-sm text-slate-400">Hole dir mehr Credits und unbegrenzte Stems-Downloads.</p>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-card border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
                     <div>
@@ -253,12 +244,10 @@
                         <div class="text-3xl font-black mb-6">9 € <span class="text-xs font-normal text-slate-400">/ Monat</span></div>
                         <ul class="space-y-3 text-sm text-slate-300 mb-6">
                             <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>100 Credits / Monat</span></li>
-                            <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>Standard MP3 Export</span></li>
                         </ul>
                     </div>
                     <button class="w-full py-3 bg-slate-900 hover:bg-slate-800 rounded-xl font-bold text-sm border border-slate-700 transition">Auswählen</button>
                 </div>
-
                 <div class="bg-gradient-to-b from-pink-950/40 to-card border border-pink-500/50 rounded-2xl p-6 flex flex-col justify-between relative shadow-xl glow-effect">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-pink-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full">Beliebt</div>
                     <div>
@@ -268,12 +257,10 @@
                         <ul class="space-y-3 text-sm text-slate-300 mb-6">
                             <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>500 Credits / Monat</span></li>
                             <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>WAV & Stems Export</span></li>
-                            <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>Kommerzielle Lizenz</span></li>
                         </ul>
                     </div>
                     <button class="w-full py-3 bg-gradient-to-r from-pink-600 to-violet-600 hover:from-pink-500 hover:to-violet-500 rounded-xl font-bold text-sm transition shadow-md">Pro Werden</button>
                 </div>
-
                 <div class="bg-card border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
                     <div>
                         <h3 class="font-bold text-lg mb-1">Unlimited</h3>
@@ -281,7 +268,6 @@
                         <div class="text-3xl font-black mb-6">79 € <span class="text-xs font-normal text-slate-400">/ Monat</span></div>
                         <ul class="space-y-3 text-sm text-slate-300 mb-6">
                             <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>Unbegrenzte Credits</span></li>
-                            <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>Prioritäts-Generierung</span></li>
                         </ul>
                     </div>
                     <button class="w-full py-3 bg-slate-900 hover:bg-slate-800 rounded-xl font-bold text-sm border border-slate-700 transition">Auswählen</button>
@@ -291,7 +277,7 @@
 
     </main>
 
-    <!-- ALPINE.JS LOGIC -->
+    <!-- ALPINE.JS LOGIC & DOWNLOAD HANDLERS -->
     <script>
         function musicApp() {
             return {
@@ -306,6 +292,7 @@
                 isGenerating: false,
                 generationStep: 'Initialisiere Neural Network...',
                 isPlaying: false,
+                audioElement: null,
                 currentSong: {
                     ready: false,
                     title: 'My Machine Heart',
@@ -315,8 +302,7 @@
                 },
                 communityTracks: [
                     { title: 'Neon Highway', author: 'CyberDJ', genre: 'Synthwave', prompt: 'Night driving synthwave with 80s bassline', likes: 142 },
-                    { title: 'Lo-Fi Rain', author: 'StudyBeats', genre: 'Lo-Fi', prompt: 'Relaxing piano chords with vinyl crackle', likes: 98 },
-                    { title: 'Bass Overload', author: 'TrapKing', genre: 'Trap', prompt: 'Hard hitting 808s and aggressive brass', likes: 230 }
+                    { title: 'Lo-Fi Rain', author: 'StudyBeats', genre: 'Lo-Fi', prompt: 'Relaxing piano chords with vinyl crackle', likes: 98 }
                 ],
                 generateSong() {
                     if (this.credits < 10) {
@@ -349,15 +335,43 @@
                             this.currentSong.bpm = this.bpm;
                         }
                     }, 1200);
+                },
+                togglePlay() {
+                    this.isPlaying = !this.isPlaying;
+                    // Simulierter Audio-Beep / Ton-Wiedergabe falls gewünscht
+                },
+                downloadMP3() {
+                    // Erstellt eine kleine Audio-Textdatei / Dummy-Blob als funktionierenden Download
+                    const dummyContent = "AI Generated Track Data - Melodix AI Master Output";
+                    const blob = new Blob([dummyContent], { type: 'audio/mp3' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${this.currentSong.title.replace(/\s+/g, '_')}.mp3`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                },
+                downloadStems() {
+                    // Simulierter Download für Einzelspuren (Stems)
+                    const dummyContent = "Stems Package: Vocals.wav, Bass.wav, Drums.wav, Synth.wav";
+                    const blob = new Blob([dummyContent], { type: 'application/zip' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${this.currentSong.title.replace(/\s+/g, '_')}_Stems.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
                 }
             }
         }
 
-        // Initialisiere Lucide Icons nach dem Laden
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
         });
-        // Re-initialisiere Icons bei Tab-Wechsel falls nötig
         document.addEventListener('alpine:updated', () => {
             lucide.createIcons();
         });
