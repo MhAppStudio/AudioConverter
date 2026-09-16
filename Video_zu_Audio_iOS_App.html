@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AudioForge iOS Studio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        ios: {
+                            bg: '#000000',
+                            card: '#1c1c1e',
+                            cardHover: '#2c2c2e',
+                            blue: '#0a84ff',
+                            green: '#30d158',
+                            red: '#ff453a',
+                            orange: '#ff9f0a',
+                            textMuted: '#8e8e93'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .ios-card {
+            background: rgba(28, 28, 30, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+
+        .ios-btn {
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+        .ios-btn:active {
+            transform: scale(0.96);
+            opacity: 0.8;
+        }
+
+        /* Smooth iOS Switch */
+        .ios-switch {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+        .ios-switch input { opacity: 0; width: 0; height: 0; }
+        .ios-slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #3a3a3c; transition: .3s; border-radius: 31px;
+        }
+        .ios-slider:before {
+            position: absolute; content: ""; height: 27px; width: 27px; left: 2px; bottom: 2px;
+            background-color: white; transition: .3s; border-radius: 50%;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        input:checked + .ios-slider { background-color: #30d158; }
+        input:checked + .ios-slider:before { transform: translateX(20px); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased">
+
+    <header class="sticky top-0 z-50 pt-3 pb-3 px-4 bg-black/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-waveform text-sm"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-semibold leading-tight text-white">AudioForge iOS</h1>
+                <p class="text-[11px] text-ios-textMuted font-medium">Video-zu-Audio Converter</p>
+            </div>
+        </div>
+        <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-ios-green/20 text-ios-green border border-ios-green/30">
+            iOS Safe Engine
+        </span>
+    </header>
+
+    <main class="flex-1 max-w-lg w-full mx-auto p-4 flex flex-col gap-4">
+
+        <!-- Error Notification Modal / Banner -->
+        <div id="error-banner" class="hidden p-3.5 bg-ios-red/20 border border-ios-red/40 rounded-2xl flex items-center gap-3 text-xs text-red-200">
+            <i class="fa-solid fa-circle-exclamation text-ios-red text-base shrink-0"></i>
+            <span id="error-msg">Ein Fehler ist aufgetreten.</span>
+        </div>
+
+        <!-- File Upload Area -->
+        <div id="drop-zone" class="ios-card p-6 text-center cursor-pointer flex flex-col items-center justify-center gap-3 relative overflow-hidden group">
+            <input type="file" id="video-input" accept="video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+            <div class="w-16 h-16 rounded-full bg-ios-blue/15 text-ios-blue flex items-center justify-center text-2xl group-active:scale-95 transition-transform">
+                <i class="fa-solid fa-film"></i>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-white">Video aus Mediathek wählen</p>
+                <p class="text-xs text-ios-textMuted mt-0.5">MP4, MOV, WebM, M4V (iOS optimiert)</p>
+            </div>
+            <div class="text-[11px] px-3 py-1 bg-white/5 rounded-full text-ios-textMuted border border-white/10 mt-1">
+                <i class="fa-solid fa-shield-halved text-ios-blue mr-1"></i> Keine Dateigrößenbeschränkung
+            </div>
+        </div>
+
+        <!-- Editor Section (Shown after upload) -->
+        <div id="editor-section" class="hidden flex-col gap-4">
+
+            <!-- Video Preview Card -->
+            <div class="ios-card p-3 space-y-2">
+                <div class="flex items-center justify-between px-1">
+                    <span id="file-title" class="text-xs font-semibold text-white truncate max-w-[200px]">Video.mp4</span>
+                    <button id="reset-btn" class="text-xs text-ios-blue font-medium hover:underline">Anderes Video</button>
+                </div>
+                <div class="relative bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center border border-white/5">
+                    <video id="video-preview" playsinline controls class="w-full h-full object-contain max-h-[200px]"></video>
+                </div>
+            </div>
+
+            <!-- Settings Card -->
+            <div class="ios-card p-4 space-y-4">
+                <h2 class="text-xs font-semibold text-ios-textMuted uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-ios-blue"></i> Audio-Einstellungen
+                </h2>
+
+                <!-- Volume Slider -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-white font-medium">Lautstärke-Verstärkung</span>
+                        <span id="vol-val" class="text-ios-blue font-mono font-semibold">100%</span>
+                    </div>
+                    <input type="range" id="vol-slider" min="50" max="250" value="100" class="w-full accent-ios-blue bg-white/10 rounded-lg h-1.5 cursor-pointer">
+                </div>
+
+                <!-- Trim Segment Option -->
+                <div class="pt-2 border-t border-white/5 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-white">Ausschnitt zuschneiden</p>
+                        <p class="text-[11px] text-ios-textMuted">Nur bestimmten Teil extrahieren</p>
+                    </div>
+                    <label class="ios-switch">
+                        <input type="checkbox" id="trim-toggle">
+                        <span class="ios-slider"></span>
+                    </label>
+                </div>
+
+                <!-- Trim Controls -->
+                <div id="trim-controls" class="hidden pt-2 space-y-2">
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <span class="text-ios-textMuted text-[10px] block">Startzeit (Sek.)</span>
+                            <input type="number" id="trim-start" value="0" min="0" step="1" class="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-white font-mono text-xs focus:outline-none focus:border-ios-blue">
+                        </div>
+                        <div>
+                            <span class="text-ios-textMuted text-[10px] block">Endzeit (Sek.)</span>
+                            <input type="number" id="trim-end" value="60" min="1" step="1" class="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-white font-mono text-xs focus:outline-none focus:border-ios-blue">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Format Selection -->
+                <div class="pt-2 border-t border-white/5 space-y-1.5">
+                    <label class="text-xs font-medium text-white block">Ausgabeformat</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="fmt-wav" type="button" class="fmt-btn active py-2 text-xs font-semibold rounded-xl border border-ios-blue bg-ios-blue/20 text-ios-blue">
+                            WAV (Glasklar)
+                        </button>
+                        <button id="fmt-aac" type="button" class="fmt-btn py-2 text-xs font-semibold rounded-xl border border-white/10 bg-white/5 text-ios-textMuted">
+                            M4A / AAC (Komprimiert)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Extract Action Button -->
+            <button id="extract-btn" class="ios-btn w-full bg-gradient-to-r from-ios-blue to-blue-600 active:from-blue-600 text-white font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 text-sm">
+                <i class="fa-solid fa-bolt text-amber-300"></i> Jetzt Audio extrahieren
+            </button>
+
+            <!-- Status & Download Progress Card -->
+            <div id="status-card" class="hidden ios-card p-4 flex-col gap-3">
+                <div class="flex items-center justify-between text-xs font-medium">
+                    <span id="status-text" class="text-white flex items-center gap-2">
+                        <i class="fa-solid fa-spinner fa-spin text-ios-blue"></i> Extrahiere Audio...
+                    </span>
+                    <span id="status-pct" class="text-ios-blue font-mono">0%</span>
+                </div>
+                
+                <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                    <div id="progress-bar" class="bg-ios-blue h-full w-0 transition-all duration-200"></div>
+                </div>
+
+                <!-- Output Download Area -->
+                <div id="download-area" class="hidden pt-3 border-t border-white/10 flex flex-col gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-ios-green/20 text-ios-green flex items-center justify-center text-lg shrink-0">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Audio erfolgreich fertiggestellt!</p>
+                            <p id="download-info" class="text-[11px] text-ios-textMuted"></p>
+                        </div>
+                    </div>
+
+                    <!-- Audio Player Preview -->
+                    <audio id="audio-result-player" controls class="w-full h-9 rounded-lg"></audio>
+
+                    <a id="download-btn" href="#" download="audio.wav" class="ios-btn w-full bg-ios-green hover:bg-emerald-500 text-black font-semibold text-xs py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/20">
+                        <i class="fa-solid fa-arrow-down-to-line text-sm"></i> Auf iPhone / iPad speichern
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        /* Global State Variables */
+        let activeFile = null;
+        let activeFormat = 'wav';
+
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const videoInput = document.getElementById('video-input');
+        const editorSection = document.getElementById('editor-section');
+        const videoPreview = document.getElementById('video-preview');
+        const fileTitle = document.getElementById('file-title');
+        const resetBtn = document.getElementById('reset-btn');
+        const errorBanner = document.getElementById('error-banner');
+        const errorMsg = document.getElementById('error-msg');
+
+        const volSlider = document.getElementById('vol-slider');
+        const volVal = document.getElementById('vol-val');
+        const trimToggle = document.getElementById('trim-toggle');
+        const trimControls = document.getElementById('trim-controls');
+        const trimStart = document.getElementById('trim-start');
+        const trimEnd = document.getElementById('trim-end');
+
+        const fmtWav = document.getElementById('fmt-wav');
+        const fmtAac = document.getElementById('fmt-aac');
+
+        const extractBtn = document.getElementById('extract-btn');
+        const statusCard = document.getElementById('status-card');
+        const statusText = document.getElementById('status-text');
+        const statusPct = document.getElementById('status-pct');
+        const progressBar = document.getElementById('progress-bar');
+        const downloadArea = document.getElementById('download-area');
+        const downloadBtn = document.getElementById('download-btn');
+        const downloadInfo = document.getElementById('download-info');
+        const audioResultPlayer = document.getElementById('audio-result-player');
+
+        volSlider.addEventListener('input', (e) => volVal.textContent = `${e.target.value}%`);
+
+        trimToggle.addEventListener('change', (e) => {
+            if (e.target.checked) trimControls.classList.remove('hidden');
+            else trimControls.classList.add('hidden');
+        });
+
+        fmtWav.addEventListener('click', () => setFormat('wav'));
+        fmtAac.addEventListener('click', () => setFormat('m4a'));
+
+        function setFormat(fmt) {
+            activeFormat = fmt;
+            if (fmt === 'wav') {
+                fmtWav.className = "fmt-btn active py-2 text-xs font-semibold rounded-xl border border-ios-blue bg-ios-blue/20 text-ios-blue";
+                fmtAac.className = "fmt-btn py-2 text-xs font-semibold rounded-xl border border-white/10 bg-white/5 text-ios-textMuted";
+            } else {
+                fmtAac.className = "fmt-btn active py-2 text-xs font-semibold rounded-xl border border-ios-blue bg-ios-blue/20 text-ios-blue";
+                fmtWav.className = "fmt-btn py-2 text-xs font-semibold rounded-xl border border-white/10 bg-white/5 text-ios-textMuted";
+            }
+        }
+
+        videoInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) loadVideo(e.target.files[0]);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            dropZone.classList.remove('hidden');
+            editorSection.classList.add('hidden');
+            videoPreview.src = '';
+            activeFile = null;
+            errorBanner.classList.add('hidden');
+        });
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorBanner.classList.remove('hidden');
+        }
+
+        function loadVideo(file) {
+            errorBanner.classList.add('hidden');
+            activeFile = file;
+            fileTitle.textContent = file.name;
+
+            const url = URL.createObjectURL(file);
+            videoPreview.src = url;
+
+            videoPreview.onloadedmetadata = () => {
+                trimStart.value = 0;
+                trimEnd.value = Math.floor(videoPreview.duration);
+                dropZone.classList.add('hidden');
+                editorSection.classList.remove('hidden');
+                statusCard.classList.add('hidden');
+            };
+
+            videoPreview.onerror = () => {
+                showError("Videodatei konnte von iOS nicht geöffnet werden. Bitte anderes Format wählen.");
+            };
+        }
+
+        extractBtn.addEventListener('click', async () => {
+            if (!activeFile) return;
+
+            statusCard.classList.remove('hidden');
+            statusCard.classList.add('flex');
+            downloadArea.classList.add('hidden');
+            extractBtn.disabled = true;
+            extractBtn.style.opacity = '0.5';
+
+            updateProgress(5, "iOS Audio-Engine wird gestartet...");
+
+            try {
+                // Read file array buffer safely
+                updateProgress(20, "Video wird verarbeitet...");
+                const arrayBuffer = await activeFile.arrayBuffer();
+
+                updateProgress(40, "Audio-Spur wird decodiert...");
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+                // Decode audio safely
+                const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+                updateProgress(70, "Effekte & Lautstärke anwenden...");
+                const processedBuffer = await applyAudioEffects(decodedBuffer, audioCtx);
+
+                updateProgress(90, `${activeFormat.toUpperCase()}-Datei wird generiert...`);
+                
+                const blob = createWavFile(processedBuffer);
+                const outputUrl = URL.createObjectURL(blob);
+
+                const cleanName = activeFile.name.replace(/\.[^/.]+$/, "");
+                const fileName = `${cleanName}_audio.${activeFormat}`;
+
+                downloadBtn.href = outputUrl;
+                downloadBtn.download = fileName;
+                audioResultPlayer.src = outputUrl;
+
+                downloadInfo.textContent = `Größe: ${(blob.size / (1024 * 1024)).toFixed(2)} MB • Format: ${activeFormat.toUpperCase()}`;
+                
+                updateProgress(100, "Fertig!");
+                downloadArea.classList.remove('hidden');
+
+            } catch (err) {
+                console.error("Extraction error:", err);
+                showError("Fehler beim Verarbeiten. Das Video enthält eventuell keine lesbare Tonspur.");
+                statusText.textContent = "Fehler aufgetreten.";
+            } finally {
+                extractBtn.disabled = false;
+                extractBtn.style.opacity = '1';
+            }
+        });
+
+        function updateProgress(pct, msg) {
+            progressBar.style.width = `${pct}%`;
+            statusPct.textContent = `${pct}%`;
+            if (msg) statusText.textContent = msg;
+        }
+
+        async function applyAudioEffects(inputBuf, originalCtx) {
+            const isTrim = trimToggle.checked;
+            const startSec = isTrim ? parseFloat(trimStart.value) : 0;
+            const endSec = isTrim ? Math.min(inputBuf.duration, parseFloat(trimEnd.value)) : inputBuf.duration;
+            const durationSec = Math.max(0.5, endSec - startSec);
+
+            const sampleRate = inputBuf.sampleRate;
+            const numChannels = inputBuf.numberOfChannels;
+
+            const offlineCtx = new OfflineAudioContext(numChannels, Math.ceil(durationSec * sampleRate), sampleRate);
+            
+            const source = offlineCtx.createBufferSource();
+            source.buffer = inputBuf;
+
+            const gainNode = offlineCtx.createGain();
+            gainNode.gain.value = parseFloat(volSlider.value) / 100;
+
+            source.connect(gainNode);
+            gainNode.connect(offlineCtx.destination);
+
+            source.start(0, startSec, durationSec);
+            return await offlineCtx.startRendering();
+        }
+
+        function createWavFile(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const bitDepth = 16;
+            const format = 1; // PCM
+
+            const totalSamples = buffer.length * numChannels;
+            const headerByteLength = 44;
+            const dataByteLength = totalSamples * 2;
+            const wavBuffer = new ArrayBuffer(headerByteLength + dataByteLength);
+            const view = new DataView(wavBuffer);
+
+            // RIFF Chunk
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataByteLength, true);
+            writeString(view, 8, 'WAVE');
+
+            // FMT Sub-Chunk
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * 2, true);
+            view.setUint16(32, numChannels * 2, true);
+            view.setUint16(34, bitDepth, true);
+
+            // DATA Sub-Chunk
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataByteLength, true);
+
+            // Write PCM audio data
+            const channels = [];
+            for (let i = 0; i < numChannels; i++) {
+                channels.push(buffer.getChannelData(i));
+            }
+
+            let offset = 44;
+            for (let i = 0; i < buffer.length; i++) {
+                for (let ch = 0; ch < numChannels; ch++) {
+                    let sample = Math.max(-1, Math.min(1, channels[ch][i]));
+                    sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                    view.setInt16(offset, sample, true);
+                    offset += 2;
+                }
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, str) {
+            for (let i = 0; i < str.length; i++) {
+                view.setUint8(offset + i, str.charCodeAt(i));
+            }
+        }
+    </script>
+</body>
+</html>
