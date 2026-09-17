@@ -1,380 +1,139 @@
 <!DOCTYPE html>
-<html lang="de" class="dark">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Melodix AI - Next-Gen Musikgenerator</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darker: '#030712',
-                        card: '#0f172a',
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Alpine.js für Interaktivität -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>MyTunes Web-Studio</title>
     <style>
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); }
-            50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.8); }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .glow-effect { animation: pulse-glow 3s infinite; }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            color: #1db954;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #b3b3b3;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background: #2a2a2a;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+            height: 100px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1db954;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #1ed760;
+        }
+        .player-section {
+            margin-top: 30px;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+            text-align: center;
+        }
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
     </style>
 </head>
-<body class="bg-darker text-slate-100 min-h-screen font-sans selection:bg-pink-500 selection:text-white" x-data="musicApp()">
+<body>
 
-    <!-- HEADER / NAVIGATION -->
-    <header class="border-b border-slate-800/80 backdrop-blur-md sticky top-0 z-50 bg-darker/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3 cursor-pointer" @click="activeTab = 'generator'">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-500 to-violet-600 flex items-center justify-center glow-effect">
-                    <i data-lucide="headphones" class="w-5 h-5 text-white"></i>
-                </div>
-                <span class="text-xl font-black bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">Melodix AI</span>
-            </div>
-            
-            <nav class="hidden md:flex space-x-6 text-sm font-medium">
-                <button @click="activeTab = 'generator'" :class="activeTab === 'generator' ? 'text-pink-400' : 'text-slate-400 hover:text-white'" class="transition">Studio</button>
-                <button @click="activeTab = 'community'" :class="activeTab === 'community' ? 'text-pink-400' : 'text-slate-400 hover:text-white'" class="transition">Community Feed</button>
-                <button @click="activeTab = 'pricing'" :class="activeTab === 'pricing' ? 'text-pink-400' : 'text-slate-400 hover:text-white'" class="transition">Preise & Credits</button>
-            </nav>
-
-            <div class="flex items-center space-x-4">
-                <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center space-x-2">
-                    <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
-                    <span x-text="credits + ' Credits'"></span>
-                </div>
-                <div class="w-9 h-9 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 flex items-center justify-center font-bold text-sm">
-                    MH
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- MAIN CONTAINER -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        <!-- TAB 1: STUDIO / GENERATOR -->
-        <div x-show="activeTab === 'generator'" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <!-- Linke Spalte: Eingabemaske -->
-            <div class="lg:col-span-7 bg-card border border-slate-800/80 rounded-2xl p-6 shadow-xl">
-                <h1 class="text-2xl font-bold mb-1">Neuen Song generieren</h1>
-                <p class="text-sm text-slate-400 mb-6">Beschreibe deine Idee oder wähle erweiterte Parameter für deinen Hit.</p>
-
-                <div class="space-y-5">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Song-Beschreibung & Prompt</label>
-                        <textarea x-model="prompt" rows="3" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3.5 text-sm text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none resize-none" placeholder="Z.B. Ein energiegeladener Cyberpunk-Hyperpop-Song über künstliche Intelligenz..."></textarea>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="text-sm font-medium text-slate-300">Songtext (Lyrics)</label>
-                            <button @click="customLyricsToggle = !customLyricsToggle" class="text-xs text-pink-400 hover:underline" x-text="customLyricsToggle ? 'Auto-Generate aktivieren' : 'Eigene Lyrics eingeben'"></button>
-                        </div>
-                        <template x-if="customLyricsToggle">
-                            <textarea x-model="customLyrics" rows="3" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-pink-500 outline-none resize-none" placeholder="Strophe 1...&#10;Refrain..."></textarea>
-                        </template>
-                        <template x-if="!customLyricsToggle">
-                            <div class="text-xs text-slate-500 bg-slate-950/50 p-3 rounded-xl border border-slate-800">
-                                Die KI generiert passende, reimende Lyrics vollautomatisch basierend auf deinem Prompt.
-                            </div>
-                        </template>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-2">Genre</label>
-                            <select x-model="selectedGenre" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-pink-500 outline-none">
-                                <option>Hyperpop / Glitch-Pop</option>
-                                <option>Lo-Fi Chillhop</option>
-                                <option>Modern Trap / Hip-Hop</option>
-                                <option>Synthwave / Retro 80s</option>
-                                <option>EDM / Festival House</option>
-                                <option>Akustik / Indie Pop</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-2">Tempo (BPM)</label>
-                            <input type="number" x-model="bpm" min="60" max="180" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-pink-500 outline-none">
-                        </div>
-                    </div>
-
-                    <div class="pt-2">
-                        <label class="flex items-center space-x-3 cursor-pointer">
-                            <input type="checkbox" x-model="instrumentalOnly" class="rounded bg-slate-950 border-slate-700 text-pink-500 focus:ring-pink-500 w-4 h-4">
-                            <span class="text-sm text-slate-300">Nur Instrumental (Kein Gesang)</span>
-                        </label>
-                    </div>
-
-                    <button @click="generateSong()" :disabled="isGenerating || !prompt" class="w-full py-4 bg-gradient-to-r from-pink-600 to-violet-600 hover:from-pink-500 hover:to-violet-500 disabled:opacity-50 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center space-x-2">
-                        <template x-if="isGenerating">
-                            <div class="flex items-center space-x-2">
-                                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
-                                <span x-text="generationStep"></span>
-                            </div>
-                        </template>
-                        <template x-if="!isGenerating">
-                            <div class="flex items-center space-x-2">
-                                <i data-lucide="sparkles" class="w-5 h-5"></i>
-                                <span>Hit generieren (Cost: 10 Credits)</span>
-                            </div>
-                        </template>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Rechte Spalte: Output & Player -->
-            <div class="lg:col-span-5 flex flex-col space-y-6">
-                <div class="bg-card border border-slate-800/80 rounded-2xl p-6 shadow-xl flex-1 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="font-bold text-lg flex items-center space-x-2">
-                                <i data-lucide="disc" class="w-5 h-5 text-pink-500"></i>
-                                <span>Generierter Master</span>
-                            </h2>
-                            <span class="text-xs bg-pink-500/10 text-pink-400 border border-pink-500/20 px-2.5 py-1 rounded-full font-semibold" x-text="currentSong.genre"></span>
-                        </div>
-
-                        <div class="relative group aspect-square rounded-xl overflow-hidden bg-slate-950 mb-4 border border-slate-800 flex items-center justify-center">
-                            <template x-if="currentSong.ready">
-                                <div class="absolute inset-0 bg-gradient-to-tr from-pink-600/40 to-violet-600/40 flex flex-col items-center justify-center p-6 text-center">
-                                    <i data-lucide="music" class="w-16 h-16 text-white/80 mb-2 animate-bounce"></i>
-                                    <h3 class="text-xl font-black text-white" x-text="currentSong.title"></h3>
-                                    <p class="text-xs text-slate-300 mt-1" x-text="currentSong.bpm + ' BPM • AI Produced'"></p>
-                                </div>
-                            </template>
-                            <template x-if="!currentSong.ready">
-                                <div class="text-center p-6 text-slate-500">
-                                    <i data-lucide="radio" class="w-12 h-12 mx-auto mb-2 opacity-40"></i>
-                                    <p class="text-sm">Dein Song erscheint hier nach der Generierung.</p>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-
-                    <!-- Player Controls -->
-                    <template x-if="currentSong.ready">
-                        <div class="space-y-4">
-                            <div class="flex items-center space-x-1 h-8 bg-slate-950 px-3 rounded-lg border border-slate-800">
-                                <template x-for="i in 30">
-                                    <div class="flex-1 bg-pink-500/60 rounded-full transition-all" :style="'height: ' + (Math.sin(i) * 50 + 50) + '%'"></div>
-                                </template>
-                            </div>
-
-                            <div class="flex items-center justify-between">
-                                <button @click="togglePlay()" class="w-12 h-12 bg-white text-slate-950 rounded-full flex items-center justify-center hover:scale-105 transition shadow-lg">
-                                    <i :data-lucide="isPlaying ? 'pause' : 'play'" class="w-5 h-5 fill-slate-950"></i>
-                                </button>
-                                <div class="text-xs text-slate-400">
-                                    <span>Bereit zum Download</span>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button @click="downloadMP3()" title="MP3 Download" class="p-2.5 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition flex items-center space-x-1 text-xs">
-                                        <i data-lucide="download" class="w-4 h-4 text-pink-400"></i>
-                                        <span>MP3</span>
-                                    </button>
-                                    <button @click="downloadStems()" title="Stems exportieren" class="p-2.5 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition flex items-center space-x-1 text-xs">
-                                        <i data-lucide="layers" class="w-4 h-4 text-violet-400"></i>
-                                        <span>Stems</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
+    <div class="container">
+        <h1>MyTunes Creator</h1>
+        
+        <div class="form-group">
+            <label for="songTitle">Song-Titel</label>
+            <input type="text" id="songTitle" placeholder="Gib deinem Song einen Namen...">
         </div>
 
-        <!-- TAB 2: COMMUNITY FEED -->
-        <div x-show="activeTab === 'community'" class="space-y-6">
-            <div>
-                <h2 class="text-2xl font-bold">Community Top Hits</h2>
-                <p class="text-sm text-slate-400">Entdecke, like und streame von anderen Nutzern generierte Tracks.</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <template x-for="track in communityTracks">
-                    <div class="bg-card border border-slate-800 rounded-2xl p-5 hover:border-pink-500/50 transition shadow-lg flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="font-bold text-base" x-text="track.title"></h3>
-                                    <p class="text-xs text-slate-400" x-text="'Von ' + track.author"></p>
-                                </div>
-                                <span class="text-[10px] bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full font-semibold" x-text="track.genre"></span>
-                            </div>
-                            <p class="text-xs text-slate-400 italic mb-4" x-text="'“' + track.prompt + '”'"></p>
-                        </div>
-                        <div class="flex items-center justify-between pt-3 border-t border-slate-800/80">
-                            <button @click="track.likes++" class="flex items-center space-x-1.5 text-xs text-pink-400 hover:text-pink-300">
-                                <i data-lucide="heart" class="w-4 h-4 fill-pink-500/20"></i>
-                                <span x-text="track.likes"></span>
-                            </button>
-                            <button @click="alert('Stream gestartet!')" class="p-2 bg-slate-900 hover:bg-slate-800 rounded-lg border border-slate-800">
-                                <i data-lucide="play" class="w-3.5 h-3.5 text-white fill-white"></i>
-                            </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
+        <div class="form-group">
+            <label for="musicStyle">Musikstil / Genre</label>
+            <select id="musicStyle">
+                <option value="pop">Pop</option>
+                <option value="hiphop">Hip Hop / Rap</option>
+                <option value="rock">Rock</option>
+                <option value="electronic">Electronic / EDM</option>
+                <option value="lofi">Lo-Fi Beats</option>
+            </select>
         </div>
 
-        <!-- TAB 3: PRICING -->
-        <div x-show="activeTab === 'pricing'" class="max-w-4xl mx-auto space-y-8">
-            <div class="text-center">
-                <h2 class="text-3xl font-black mb-2">Wähle dein Creator-Paket</h2>
-                <p class="text-sm text-slate-400">Hole dir mehr Credits und unbegrenzte Stems-Downloads.</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-card border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
-                    <div>
-                        <h3 class="font-bold text-lg mb-1">Starter</h3>
-                        <p class="text-xs text-slate-400 mb-4">Für Gelegenheits-Kreative</p>
-                        <div class="text-3xl font-black mb-6">9 € <span class="text-xs font-normal text-slate-400">/ Monat</span></div>
-                        <ul class="space-y-3 text-sm text-slate-300 mb-6">
-                            <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>100 Credits / Monat</span></li>
-                        </ul>
-                    </div>
-                    <button class="w-full py-3 bg-slate-900 hover:bg-slate-800 rounded-xl font-bold text-sm border border-slate-700 transition">Auswählen</button>
-                </div>
-                <div class="bg-gradient-to-b from-pink-950/40 to-card border border-pink-500/50 rounded-2xl p-6 flex flex-col justify-between relative shadow-xl glow-effect">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-pink-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full">Beliebt</div>
-                    <div>
-                        <h3 class="font-bold text-lg mb-1">Pro Producer</h3>
-                        <p class="text-xs text-slate-400 mb-4">Voller Zugriff auf alle Features</p>
-                        <div class="text-3xl font-black mb-6">29 € <span class="text-xs font-normal text-slate-400">/ Monat</span></div>
-                        <ul class="space-y-3 text-sm text-slate-300 mb-6">
-                            <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>500 Credits / Monat</span></li>
-                            <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>WAV & Stems Export</span></li>
-                        </ul>
-                    </div>
-                    <button class="w-full py-3 bg-gradient-to-r from-pink-600 to-violet-600 hover:from-pink-500 hover:to-violet-500 rounded-xl font-bold text-sm transition shadow-md">Pro Werden</button>
-                </div>
-                <div class="bg-card border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
-                    <div>
-                        <h3 class="font-bold text-lg mb-1">Unlimited</h3>
-                        <p class="text-xs text-slate-400 mb-4">Für Studios & Profis</p>
-                        <div class="text-3xl font-black mb-6">79 € <span class="text-xs font-normal text-slate-400">/ Monat</span></div>
-                        <ul class="space-y-3 text-sm text-slate-300 mb-6">
-                            <li class="flex items-center space-x-2"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i><span>Unbegrenzte Credits</span></li>
-                        </ul>
-                    </div>
-                    <button class="w-full py-3 bg-slate-900 hover:bg-slate-800 rounded-xl font-bold text-sm border border-slate-700 transition">Auswählen</button>
-                </div>
-            </div>
+        <div class="form-group">
+            <label for="songPrompt">Prompt / Liedtext-Idee für die KI</label>
+            <textarea id="songPrompt" placeholder="Beschreibe den Vibe oder füge Textzeilen ein..."></textarea>
         </div>
 
-    </main>
+        <button onclick="generateSong()">Song mit KI generieren</button>
 
-    <!-- ALPINE.JS LOGIC & DOWNLOAD HANDLERS -->
+        <div class="player-section">
+            <h3>Dein erstellter Track</h3>
+            <p id="currentTrackInfo">Noch kein Song generiert.</p>
+            <!-- Platzhalter für einen Audio-Player (hier kannst du später generierte URLs einbinden) -->
+            <audio id="audioPlayer" controls style="display: none;"></audio>
+        </div>
+    </div>
+
     <script>
-        function musicApp() {
-            return {
-                activeTab: 'generator',
-                credits: 80,
-                prompt: '',
-                selectedGenre: 'Hyperpop / Glitch-Pop',
-                bpm: 150,
-                customLyricsToggle: false,
-                customLyrics: '',
-                instrumentalOnly: false,
-                isGenerating: false,
-                generationStep: 'Initialisiere Neural Network...',
-                isPlaying: false,
-                audioElement: null,
-                currentSong: {
-                    ready: false,
-                    title: 'My Machine Heart',
-                    genre: 'Hyperpop',
-                    bpm: 150,
-                    duration: '2:33'
-                },
-                communityTracks: [
-                    { title: 'Neon Highway', author: 'CyberDJ', genre: 'Synthwave', prompt: 'Night driving synthwave with 80s bassline', likes: 142 },
-                    { title: 'Lo-Fi Rain', author: 'StudyBeats', genre: 'Lo-Fi', prompt: 'Relaxing piano chords with vinyl crackle', likes: 98 }
-                ],
-                generateSong() {
-                    if (this.credits < 10) {
-                        alert('Nicht genügend Credits!');
-                        return;
-                    }
-                    this.credits -= 10;
-                    this.isGenerating = this.currentSong.ready = false;
-                    
-                    let steps = [
-                        'Analysiere Prompt & Struktur...',
-                        'Generiere KI-Melodie & Akkorde...',
-                        'Synthetisiere Vocals & Effekte...',
-                        'Mastering & Finalisierung...'
-                    ];
-                    
-                    let i = 0;
-                    this.isGenerating = true;
-                    this.generationStep = steps[0];
-                    
-                    let interval = setInterval(() => {
-                        i++;
-                        if (i < steps.length) {
-                            this.generationStep = steps[i];
-                        } else {
-                            clearInterval(interval);
-                            this.isGenerating = false;
-                            this.currentSong.ready = true;
-                            this.currentSong.genre = this.selectedGenre.split('/')[0].trim();
-                            this.currentSong.bpm = this.bpm;
-                        }
-                    }, 1200);
-                },
-                togglePlay() {
-                    this.isPlaying = !this.isPlaying;
-                    // Simulierter Audio-Beep / Ton-Wiedergabe falls gewünscht
-                },
-                downloadMP3() {
-                    // Erstellt eine kleine Audio-Textdatei / Dummy-Blob als funktionierenden Download
-                    const dummyContent = "AI Generated Track Data - Melodix AI Master Output";
-                    const blob = new Blob([dummyContent], { type: 'audio/mp3' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${this.currentSong.title.replace(/\s+/g, '_')}.mp3`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
-                },
-                downloadStems() {
-                    // Simulierter Download für Einzelspuren (Stems)
-                    const dummyContent = "Stems Package: Vocals.wav, Bass.wav, Drums.wav, Synth.wav";
-                    const blob = new Blob([dummyContent], { type: 'application/zip' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${this.currentSong.title.replace(/\s+/g, '_')}_Stems.zip`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
-                }
-            }
-        }
+        function generateSong() {
+            const title = document.getElementById('songTitle').value || "Unbenannter Track";
+            const style = document.getElementById('musicStyle').value;
+            const prompt = document.getElementById('songPrompt').value;
+            
+            const infoText = document.getElementById('currentTrackInfo');
+            const player = document.getElementById('audioPlayer');
 
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-        });
-        document.addEventListener('alpine:updated', () => {
-            lucide.createIcons();
-        });
+            infoText.innerText = `Generiere "${title}" (${style})... Bitte warten.`;
+
+            // Hier würde normalerweise die Verbindung zu einer KI-Musik-API (wie MusicAPI) stattfinden.
+            // Für den Prototypen simulieren wir den Prozess mit einer kurzen Verzögerung:
+            setTimeout(() => {
+                infoText.innerText = `Fertig! Abspielen: "${title}"`;
+                // Beispiel-Audio für die Demonstration (ersetze dies später durch die echte API-Antwort)
+                player.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+                player.style.display = "block";
+                player.play();
+            }, 2000);
+        }
     </script>
+
 </body>
 </html>
